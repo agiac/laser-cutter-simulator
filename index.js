@@ -1,12 +1,10 @@
-import {default as V} from './vector.js'
-
+import { default as V } from "./vector.js";
 
 // const a = V.new(1, 1);
 // const b = V.new(5, 5);
 // const c = b.unit();
 
 // console.log(a, b, c, b.mag());
-
 
 var canvas = document.createElement("canvas", {});
 canvas.width = 600;
@@ -24,70 +22,57 @@ const circle = onContext((context, x, y, r) => {
   context.stroke();
 });
 
-
-
-
-
-
-
-
-const settingsData = ({ path, accX, accY, maxSpeedX, maxSpeedY }) => ({
+const settingsData = ({ path, acceleration, maxSpeed }) => ({
   path,
-  accX,
-  accY,
-  maxSpeedX,
-  maxSpeedY
+  acceleration,
+  maxSpeed
 });
 
-const frameData = ({ settings, lastPosition, lastSpeed, target }) => ({
+const frameData = ({ settings, position, speed, target }) => ({
   settings: settingsData({ ...settings }),
-  lastPosition,
-  lastSpeed,
+  position,
+  speed,
   target
 });
 
 const drawFrame = frame => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   ctx.beginPath();
   frame.settings.path.forEach(p => ctx.lineTo(p.x, p.y));
   ctx.stroke();
 
-  const current = frame.lastPosition;
+  circle(frame.position.x, frame.position.y, 10);
 
-  circle(current.x, current.y, 10);
-
+  const position = frame.position;
+  const speed = frame.speed;
   const target = frame.settings.path[frame.target];
 
-  const dir = target.sub(current).unit();
+  const dir = target.sub(position).unit();
+  const nextSpeed = speed
+    .add(dir.scale(frame.settings.acceleration.x))
+    .limit(frame.settings.maxSpeed.x);
+  const nextPosition = position.add(nextSpeed);
+  const nextTarget =
+    target.sub(nextPosition).mag() < frame.settings.maxSpeed.x
+      ? (frame.target + 1) % frame.settings.path.length
+      : frame.target;
 
-  const next = current.add(dir.scale(frame.settings.maxSpeedX));
-
-  const nextTarget = target.sub(next).mag() < 1 ? (frame.target + 1) % frame.settings.path.length : frame.target;
-
-  
-
-  const newFrame = frameData({ ...frame, lastPosition: next, target: nextTarget });
+  const newFrame = frameData({
+    ...frame,
+    position: nextPosition,
+    target: nextTarget,
+    speed: nextSpeed
+  });
 
   return newFrame;
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
 const draw = frame => () => {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const newFrame = drawFrame(frame);
 
- window.requestAnimationFrame(draw(newFrame));
+  window.requestAnimationFrame(draw(newFrame));
 };
 
 const settings = settingsData({
@@ -98,14 +83,19 @@ const settings = settingsData({
     V.new(200, 100),
     V.new(100, 100)
   ],
-  accX: 10,
-  accY: 10,
-  maxSpeedX: 2,
-  maxSpeedY: 100
+  acceleration: V.new(1, 1),
+  maxSpeed: V.new(3, 3)
 });
 
 window.requestAnimationFrame(
-  draw(frameData({ settings, lastPosition: V.new(0,0), target: 0 }))
+  draw(
+    frameData({
+      settings,
+      position: V.new(0, 0),
+      speed: V.new(0, 0),
+      target: 0
+    })
+  )
 );
 
 document.body.appendChild(canvas);

@@ -48,7 +48,16 @@ const Vector = Object.freeze({
    */
   scale(s) {
     return this.new(this.x * s, this.y * s);
+  },
+  /**
+   * @returns {Vector}
+   */
+  limit(max) {
+    if (this.mag() > max) {
+      return this.unit().scale(max);
+    }
+    return this.new(this.x, this.y);
   }
 });
 
-export default Vector
+export default Vector;
