@@ -35,82 +35,73 @@ const frameData = ({ settings, position, speed, target }) => ({
   target
 });
 
+const calculateMaximumAcceleration = (axesMaximumAcceleration, direction) => {
+  var acceleration;
+  if (
+    Math.abs(direction.y / direction.x) >
+    Math.abs(axesMaximumAcceleration.y / axesMaximumAcceleration.x)
+  ) {
+    acceleration = Math.abs(axesMaximumAcceleration.y / direction.y);
+  } else {
+    acceleration = Math.abs(axesMaximumAcceleration.x / direction.x);
+  }
+  return acceleration;
+};
+
+const calculateMaximumSpeed = (axesMaximumSpeed, speed) => {
+  var maxSpeed = 1000000000;
+  if (
+    Math.abs(speed.x) > axesMaximumSpeed.x &&
+    Math.abs(speed.y) < axesMaximumSpeed.y
+  ) {
+    maxSpeed = axesMaximumSpeed.x;
+  } else if (
+    Math.abs(speed.y) > axesMaximumSpeed.y &&
+    Math.abs(speed.x) < axesMaximumSpeed.x
+  ) {
+    maxSpeed = axesMaximumSpeed.y;
+  } else if (
+    Math.abs(speed.x) > axesMaximumSpeed.x &&
+    Math.abs(speed.y) > axesMaximumSpeed.y
+  ) {
+    maxSpeed =
+      axesMaximumSpeed.x > axesMaximumSpeed.y
+        ? axesMaximumSpeed.y
+        : axesMaximumSpeed.x;
+  }
+  return maxSpeed
+};
+
 const drawFrame = frame => {
+  const settings = frame.settings;
+
+  //Draw
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.beginPath();
-  frame.settings.path.forEach(p => ctx.lineTo(p.x, p.y));
+  settings.path.forEach(p => ctx.lineTo(p.x, p.y));
   ctx.stroke();
 
   circle(frame.position.x, frame.position.y, 10);
 
+  //Calculate next frame
+
   const position = frame.position;
   const speed = frame.speed;
+  const target = settings.path[frame.target];
 
-  const target = frame.settings.path[frame.target];
-
-  // const dir = target.sub(position).unit();
-  // const nextSpeed = speed
-  //   .add(dir.scale(frame.settings.acceleration.x))
-  //   .limit(frame.settings.maxSpeed.x);
-  // const nextPosition = position.add(nextSpeed);
-  // const nextTarget =
-  //   target.sub(nextPosition).mag() < frame.settings.maxSpeed.x
-  //     ? (frame.target + 1) % frame.settings.path.length
-  //     : frame.target;
   const dir = target.sub(position).unit();
+  const acceleration = dir.scale(
+    calculateMaximumAcceleration(settings.acceleration, dir)
+  );
+  const speedTemp = speed.add(acceleration);
 
-  const axesAcceleration = frame.settings.acceleration;
-  var acceleration;
-  if (
-    Math.abs(dir.y / dir.x) > Math.abs(axesAcceleration.y / axesAcceleration.x)
-  ) {
-    acceleration = Math.abs(axesAcceleration.y / dir.y);
-  } else {
-    acceleration = Math.abs(axesAcceleration.x / dir.x);
-  }
-
-  // console.log(acceleration);
-  const accelerationVec = dir.scale(acceleration);
-
-  // const acceleration =
-  //   dir.x * axesAcceleration.y < axesAcceleration.x
-  //     ? axesAcceleration.y
-  //     : axesAcceleration.x;
-  // var acceleration = Math.abs(Math.min(
-  //   axesAcceleration.x / (dir.x + 0.000000001),
-  //   axesAcceleration.y / (dir.y + 0.000000001)
-  // ));
-
-  const speedT = speed.add(accelerationVec);
-  var maxSpeed = 100000;
-  if (
-    Math.abs(speedT.x) > frame.settings.maxSpeed.x &&
-    Math.abs(speedT.y) < frame.settings.maxSpeed.y
-  ) {
-    maxSpeed = frame.settings.maxSpeed.x;
-  } else if (
-    Math.abs(speedT.y) > frame.settings.maxSpeed.y &&
-    Math.abs(speedT.x) < frame.settings.maxSpeed.x
-  ) {
-    maxSpeed = frame.settings.maxSpeed.y;
-  } else if (
-    Math.abs(speedT.x) > frame.settings.maxSpeed.x &&
-    Math.abs(speedT.y) > frame.settings.maxSpeed.y
-  ) {
-    maxSpeed =
-      frame.settings.maxSpeed.x > frame.settings.maxSpeed.y
-        ? frame.settings.maxSpeed.y
-        : frame.settings.maxSpeed.x;
-  }
-
-  // console.log(maxSpeed);
-
-  const nextSpeed = speedT.limit(maxSpeed);
+  const nextSpeed = speedTemp.limit(calculateMaximumSpeed(settings.maxSpeed, speedTemp));
   const nextPosition = position.add(nextSpeed);
   const nextTarget =
-    target.sub(nextPosition).mag() < frame.settings.maxSpeed.x
-      ? (frame.target + 1) % frame.settings.path.length
+    target.sub(nextPosition).mag() < settings.maxSpeed.x
+      ? (frame.target + 1) % settings.path.length
       : frame.target;
 
   const newFrame = frameData({
