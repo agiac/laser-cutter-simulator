@@ -7,8 +7,8 @@ import { default as V } from "./vector.js";
 // console.log(a, b, c, b.mag());
 
 var canvas = document.createElement("canvas", {});
-canvas.width = 600;
-canvas.height = 400;
+canvas.width = 800;
+canvas.height = 800;
 
 var ctx = canvas.getContext("2d");
 
@@ -69,7 +69,7 @@ const calculateMaximumSpeed = (axesMaximumSpeed, speed) => {
         ? axesMaximumSpeed.y
         : axesMaximumSpeed.x;
   }
-  return maxSpeed
+  return maxSpeed;
 };
 
 const drawFrame = frame => {
@@ -90,19 +90,55 @@ const drawFrame = frame => {
   const position = frame.position;
   const speed = frame.speed;
   const target = settings.path[frame.target];
+  const targetSpeed = 0;
 
-  const dir = target.sub(position).unit();
-  const acceleration = dir.scale(
-    calculateMaximumAcceleration(settings.acceleration, dir)
+  // PVector desired = PVector.sub(target,location);
+
+  // float d = desired.mag();
+  // desired.normalize();
+  // if (d < 100) {
+  //   float m = map(d,0,100,0,maxspeed);
+  //   desired.mult(m);
+  // } else {
+  //   desired.mult(maxspeed);
+  // }
+
+  // PVector steer = PVector.sub(desired,velocity);
+  // steer.limit(maxforce);
+  // applyForce(steer);
+
+  const positionToTarget = target.sub(position);
+  const distanceToTarget = positionToTarget.mag();
+  const directionToTarget = positionToTarget.unit();
+  const maxAcceleration = calculateMaximumAcceleration(
+    settings.acceleration,
+    directionToTarget
   );
+  const distanceToDecelarate =
+    (Math.pow(targetSpeed, 2) - Math.pow(speed.mag(), 2)) /
+    (-2 * maxAcceleration);
+
+  var accelerationMag = maxAcceleration;
+  if (distanceToTarget > distanceToDecelarate) {
+    accelerationMag = maxAcceleration;
+  } else {
+    accelerationMag =
+      (-distanceToTarget / distanceToDecelarate) * maxAcceleration;
+  }
+
+  const acceleration = directionToTarget.scale(accelerationMag);
   const speedTemp = speed.add(acceleration);
 
-  const nextSpeed = speedTemp.limit(calculateMaximumSpeed(settings.maxSpeed, speedTemp));
-  const nextPosition = position.add(nextSpeed);
-  const nextTarget =
-    target.sub(nextPosition).mag() < settings.maxSpeed.x
-      ? (frame.target + 1) % settings.path.length
-      : frame.target;
+  var nextSpeed = speedTemp.limit(
+    calculateMaximumSpeed(settings.maxSpeed, speedTemp)
+  );
+  var nextPosition = position.add(nextSpeed);
+  var nextTarget = frame.target;
+  if (target.sub(nextPosition).mag() < 1) {
+    nextPosition = target;
+    nextSpeed = V.new(0, 0);
+    nextTarget = (frame.target + 1) % (settings.path.length - 1);
+  }
 
   const newFrame = frameData({
     ...frame,
@@ -123,13 +159,13 @@ const draw = frame => () => {
 const settings = settingsData({
   path: [
     V.new(100, 100),
-    V.new(100, 200),
-    V.new(200, 200),
-    V.new(200, 100),
+    V.new(100, 700),
+    V.new(700, 700),
+    V.new(700, 100),
     V.new(100, 100)
   ],
-  acceleration: V.new(0.1, 1),
-  maxSpeed: V.new(4, 2)
+  acceleration: V.new(0.1, 0.1),
+  maxSpeed: V.new(10, 10)
 });
 
 window.requestAnimationFrame(
