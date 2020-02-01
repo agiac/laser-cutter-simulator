@@ -49,6 +49,11 @@ input {
   margin-top: 36px;
 }
 
+.no-upload {
+    color: red;
+    visibility: hidden;
+}
+
 canvas {
   width: 100%;
   max-width: var(--max-width);

@@ -17,8 +17,27 @@ calculateButton.addEventListener("click", () => {
   const maxSpeedY = document.getElementsByName("maximum-speed-y")[0].value;
   const accelerationX = document.getElementsByName("acceleration-x")[0].value;
   const accelerationY = document.getElementsByName("acceleration-y")[0].value;
+  const cuttingSpeed = document.getElementsByName("cutting-speed")[0].value;
+  const engravingSpeed = document.getElementsByName("engraving-speed")[0].value;
 
-  console.log(maxSpeedX, maxSpeedY, accelerationX, accelerationY);
+  const upload = document.getElementsByName("file-upload")[0].files[0];
+
+  if (!upload) {
+    document.querySelector(".no-upload").style.visibility = "visible"
+  } else {
+    document.querySelector(".no-upload").style.visibility = "hidden"
+    const uploadURL = window.URL.createObjectURL(upload);
+  }
+
+  console.log(
+    maxSpeedX,
+    maxSpeedY,
+    accelerationX,
+    accelerationY,
+    cuttingSpeed,
+    engravingSpeed,
+    upload
+  );
 });
 
 const startPosition = V.new(0, 0);
