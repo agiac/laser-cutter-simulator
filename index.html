@@ -2,10 +2,43 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" /> 
+    <link href="style.css" rel="stylesheet" />
   </head>
   <body>
-    <canvas id="canvas" width="800" height="800"></canvas>
+    <h1>Laser jobs time predictor</h1>
+    <div class="settings">
+      <h3>Machine settings:</h3>
+      <label>
+        Maximum speed X:
+        <input name="maximum-speed-x" type="number" min="1" value="100" />
+      </label>
+      <label>
+        Maximum speed Y:
+        <input name="maximum-speed-y" type="number" min="1" value="100" />
+      </label>
+      <label>
+        Acceleration X:
+        <input name="acceleration-x" type="number" min="1" value="3000" />
+      </label>
+      <label>
+        Acceleration Y:
+        <input name="acceleration-y" type="number" min="1" value="3000" />
+      </label>
+      <h3>Gcode settings:</h3>
+      <label>
+        Cutting speed:
+        <input name="cutting-speed" type="number" min="1" value="50" />
+      </label>
+      <label>
+        Engraving speed:
+        <input name="engraving-speed" type="number" min="1" value="80" />
+      </label>
+      <h3>File:</h3>
+      <input type="file" id="file-upload" name="file-upload" accept=".svg">
+    </div>
+    <button id="calculate-button">CALCULATE</button>
+    <canvas id="canvas"></canvas>
   </body>
   <script src="index2.js"></script>
 </html>
-

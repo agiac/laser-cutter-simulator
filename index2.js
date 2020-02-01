@@ -2,7 +2,24 @@ import { default as V } from "./vector.js";
 import * as Simulator from "./simulator";
 
 var canvas = document.getElementById("canvas");
+const resizeCanvas = canvas => () => {
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+};
+resizeCanvas(canvas)();
+window.onresize = resizeCanvas(canvas);
+
 var ctx = canvas.getContext("2d");
+
+var calculateButton = document.getElementById("calculate-button");
+calculateButton.addEventListener("click", () => {
+  const maxSpeedX = document.getElementsByName("maximum-speed-x")[0].value;
+  const maxSpeedY = document.getElementsByName("maximum-speed-y")[0].value;
+  const accelerationX = document.getElementsByName("acceleration-x")[0].value;
+  const accelerationY = document.getElementsByName("acceleration-y")[0].value;
+
+  console.log(maxSpeedX, maxSpeedY, accelerationX, accelerationY);
+});
 
 const startPosition = V.new(0, 0);
 const path = [
@@ -56,9 +73,7 @@ function draw(position, speedPointIdx, startTime) {
       ellapsedTime
     );
 
-    window.requestAnimationFrame(
-      draw(nextPosition, nextIdx, now)
-    );
+    window.requestAnimationFrame(draw(nextPosition, nextIdx, now));
   };
 }
 
