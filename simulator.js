@@ -34,4 +34,6 @@ export function plan(path, settings, startPosition) {
   return result;
 }
 
-export function estimateTime(speedPoints) {}
+export function estimateTime(speedPoints) {
+  return 12.43;
+}

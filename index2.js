@@ -1,6 +1,25 @@
 import { default as V } from "./vector.js";
 import * as Simulator from "./simulator";
 
+const settings = Object.freeze([
+  "maximum-speed-x",
+  "maximum-speed-y",
+  "acceleration-x",
+  "acceleration-y",
+  "cutting-speed",
+  "engraving-speed"
+]);
+
+settings.map(setting =>
+  document
+    .getElementsByName(setting)[0]
+    .addEventListener("change", givePrediction)
+);
+
+document
+  .getElementsByName("file-upload")[0]
+  .addEventListener("change", givePrediction);
+
 var canvas = document.getElementById("canvas");
 const resizeCanvas = canvas => () => {
   canvas.width = canvas.clientWidth;
@@ -12,34 +31,50 @@ window.onresize = resizeCanvas(canvas);
 var ctx = canvas.getContext("2d");
 
 var calculateButton = document.getElementById("calculate-button");
-calculateButton.addEventListener("click", () => {
-  const maxSpeedX = document.getElementsByName("maximum-speed-x")[0].value;
-  const maxSpeedY = document.getElementsByName("maximum-speed-y")[0].value;
-  const accelerationX = document.getElementsByName("acceleration-x")[0].value;
-  const accelerationY = document.getElementsByName("acceleration-y")[0].value;
-  const cuttingSpeed = document.getElementsByName("cutting-speed")[0].value;
-  const engravingSpeed = document.getElementsByName("engraving-speed")[0].value;
+calculateButton.addEventListener("click", loadSettings);
 
+function givePrediction() {
+  const settingsData = loadSettings();
+  const fileData = loadFile();
+
+  if (fileData) {
+    const startPosition = V.new(0, 0);
+
+    const path = [
+      { position: V.new(100, 100), desiredSpeed: 200 },
+      { position: V.new(100, 700), desiredSpeed: 200 },
+      { position: V.new(700, 700), desiredSpeed: 200 },
+      { position: V.new(700, 100), desiredSpeed: 200 },
+      { position: V.new(100, 100), desiredSpeed: 200 }
+    ];
+
+    const timePath = Simulator.plan(path, {}, startPosition);
+
+    animatePath(path, timePath);
+
+    // const timeEstimation = Simulator.estimateTime();
+  }
+}
+
+function loadSettings() {
+  return settings.reduce(
+    (res, setting) => ({
+      ...res,
+      [`${setting}`]: document.getElementsByName(setting)[0].value
+    }),
+    {}
+  );
+}
+
+function loadFile() {
   const upload = document.getElementsByName("file-upload")[0].files[0];
 
-  if (!upload) {
-    document.querySelector(".no-upload").style.visibility = "visible";
-  } else {
-    document.querySelector(".no-upload").style.visibility = "hidden";
-    const uploadURL = window.URL.createObjectURL(upload);
+  if (upload) {
+    return window.URL.createObjectURL(upload);
   }
 
-  console.log(
-    maxSpeedX,
-    maxSpeedY,
-    accelerationX,
-    accelerationY,
-    cuttingSpeed,
-    engravingSpeed,
-    upload
-  );
-});
-
+  return null;
+}
 
 function moveLaser(lastPosition, speedPointIdx, timePath, ellapsedTime) {
   const { start, target, speed, acceleration } = timePath[speedPointIdx];
@@ -64,8 +99,7 @@ function moveLaser(lastPosition, speedPointIdx, timePath, ellapsedTime) {
     : [nextPosition, speedPointIdx];
 }
 
-const animatePath = timePath => {
-
+const animatePath = (path, timePath) => {
   const draw = (position, speedPointIdx, startTime) => () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -88,18 +122,3 @@ const animatePath = timePath => {
 
   window.requestAnimationFrame(draw(null, 0, 0, performance.now()));
 };
-
-
-const startPosition = V.new(0, 0);
-
-const path = [
-  { position: V.new(100, 100), desiredSpeed: 200 },
-  { position: V.new(100, 700), desiredSpeed: 200 },
-  { position: V.new(700, 700), desiredSpeed: 200 },
-  { position: V.new(700, 100), desiredSpeed: 200 },
-  { position: V.new(100, 100), desiredSpeed: 200 }
-];
-
-const timePath = Simulator.plan(path, {}, startPosition);
-
-animatePath(timePath);
