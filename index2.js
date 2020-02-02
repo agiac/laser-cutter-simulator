@@ -23,9 +23,9 @@ calculateButton.addEventListener("click", () => {
   const upload = document.getElementsByName("file-upload")[0].files[0];
 
   if (!upload) {
-    document.querySelector(".no-upload").style.visibility = "visible"
+    document.querySelector(".no-upload").style.visibility = "visible";
   } else {
-    document.querySelector(".no-upload").style.visibility = "hidden"
+    document.querySelector(".no-upload").style.visibility = "hidden";
     const uploadURL = window.URL.createObjectURL(upload);
   }
 
@@ -40,16 +40,6 @@ calculateButton.addEventListener("click", () => {
   );
 });
 
-const startPosition = V.new(0, 0);
-const path = [
-  { position: V.new(100, 100), desiredSpeed: 200 },
-  { position: V.new(100, 700), desiredSpeed: 200 },
-  { position: V.new(700, 700), desiredSpeed: 200 },
-  { position: V.new(700, 100), desiredSpeed: 200 },
-  { position: V.new(100, 100), desiredSpeed: 200 }
-];
-
-const timePath = Simulator.plan(path, {}, startPosition);
 
 function moveLaser(lastPosition, speedPointIdx, timePath, ellapsedTime) {
   const { start, target, speed, acceleration } = timePath[speedPointIdx];
@@ -74,8 +64,9 @@ function moveLaser(lastPosition, speedPointIdx, timePath, ellapsedTime) {
     : [nextPosition, speedPointIdx];
 }
 
-function draw(position, speedPointIdx, startTime) {
-  return function() {
+const animatePath = timePath => {
+
+  const draw = (position, speedPointIdx, startTime) => () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     ctx.beginPath();
@@ -94,6 +85,21 @@ function draw(position, speedPointIdx, startTime) {
 
     window.requestAnimationFrame(draw(nextPosition, nextIdx, now));
   };
-}
 
-window.requestAnimationFrame(draw(null, 0, 0, performance.now()));
+  window.requestAnimationFrame(draw(null, 0, 0, performance.now()));
+};
+
+
+const startPosition = V.new(0, 0);
+
+const path = [
+  { position: V.new(100, 100), desiredSpeed: 200 },
+  { position: V.new(100, 700), desiredSpeed: 200 },
+  { position: V.new(700, 700), desiredSpeed: 200 },
+  { position: V.new(700, 100), desiredSpeed: 200 },
+  { position: V.new(100, 100), desiredSpeed: 200 }
+];
+
+const timePath = Simulator.plan(path, {}, startPosition);
+
+animatePath(timePath);
