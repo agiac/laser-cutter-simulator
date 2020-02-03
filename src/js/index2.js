@@ -8,20 +8,22 @@ function givePrediction() {
   const settingsData = loadSettings();
   const startPosition = V.new(0, 0);
   const path = [
-    { position: V.new(100, 100), desiredSpeed: 200 },
-    { position: V.new(100, 700), desiredSpeed: 200 },
-    { position: V.new(700, 700), desiredSpeed: 200 },
-    { position: V.new(700, 100), desiredSpeed: 200 },
-    { position: V.new(100, 100), desiredSpeed: 200 }
+    { position: V.new(200, 200), desiredSpeed: 200 },
+    { position: V.new(200, 0), desiredSpeed: 200 },
+    { position: V.new(0, 0), desiredSpeed: 200 },
+    { position: V.new(0, 200), desiredSpeed: 200 },
+    { position: V.new(200, 200), desiredSpeed: 200 }
   ];
-  const timePath = Simulator.plan(path, {}, startPosition);
+  const timePath = Simulator.plan(path, settingsData, startPosition);
   const canvas = document.getElementById("canvas");
   animatePath(path, timePath, canvas);
 
-  const timeEstimation = Simulator.estimateTime();
+  const timeEstimation = Simulator.estimateTime(timePath);
 
   const timeEstimationElement = document.getElementById("time-estimation");
-  timeEstimationElement.innerText = `${timeEstimation.toFixed(2)} min.`;
+  timeEstimationElement.innerText = `${parseInt(
+    timeEstimation / 60
+  )} min. ${parseInt(timeEstimation % 60)} sec.`;
   //   }
 }
 
@@ -29,7 +31,7 @@ function loadSettings() {
   return settings.reduce(
     (res, setting) => ({
       ...res,
-      [`${setting}`]: document.getElementsByName(setting)[0].value
+      [`${setting}`]: parseFloat(document.getElementsByName(setting)[0].value)
     }),
     {}
   );
@@ -69,7 +71,7 @@ function moveLaser(lastPosition, speedPointIdx, timePath, ellapsedTime) {
 
   const nextPosition = position.add(speedToTarget);
 
-  return Math.abs(target.sub(nextPosition).mag()) < speedToTarget.mag()
+  return Math.abs(target.sub(nextPosition).mag()) < 1
     ? [target, (speedPointIdx + 1) % timePath.length]
     : [nextPosition, speedPointIdx];
 }
@@ -97,12 +99,12 @@ function animatePath(path, timePath, canvas) {
 /// INIT
 
 const settings = Object.freeze([
-  "maximum-speed-x",
-  "maximum-speed-y",
-  "acceleration-x",
-  "acceleration-y",
-  "cutting-speed",
-  "engraving-speed"
+  "maximumSpeedX",
+  "maximumSpeedY",
+  "accelerationX",
+  "accelerationY",
+  "cuttingSpeed",
+  "engravingSpeed"
 ]);
 
 settings.map(setting =>
