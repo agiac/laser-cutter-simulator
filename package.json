@@ -1,7 +1,7 @@
 {
     "scripts": {
-        "start": "parcel index.html",
-        "build": "parcel build index.html --out-dir public --no-source-maps",
+        "start": "parcel src/index.html",
+        "build": "parcel build src/index.html --out-dir public --no-source-maps",
         "deploy": "npm run build  && now ./public --prod"
     },
     "dependencies": {},

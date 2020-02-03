@@ -1,4 +1,4 @@
-import { default as V } from "./vector.js";
+import { default as V } from "./vector.js/index.js";
 
 // const a = V.new(1, 1);
 // const b = V.new(5, 5);
