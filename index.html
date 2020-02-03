@@ -45,11 +45,16 @@
         <input type="file" id="file-upload" name="file-upload" accept=".svg" />
       </div>
     </div>
-    <div class="results">
-      <button id="calculate-button">CALCULATE</button>
-      <p class="no-upload">Upload a file!</p>
+    <div class="time-estimation-section">
+      <h2>Estimated time:</h2>
+      <h2 id="time-estimation">--- min.</h2>
     </div>
-    <canvas id="canvas"></canvas>
+    <canvas id="canvas" onload="() => {this.height = 300;}"></canvas>
+    <script>
+      const canvas = document.getElementById("canvas");
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+    </script>
   </body>
   <script src="index2.js"></script>
 </html>

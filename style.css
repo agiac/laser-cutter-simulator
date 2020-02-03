@@ -9,7 +9,8 @@ body {
 }
 
 .title,
-.results {
+.results,
+.time-estimation-section {
   width: 100%;
   max-width: var(--max-width);
 }
@@ -43,21 +44,20 @@ input {
   width: var(--column-width);
 }
 
-#calculate-button {
-  width: var(--column-width);
-  height: 25px;
-  margin-top: 36px;
+.time-estimation-section {
+    display: flex;
+    color: cornflowerblue;
+    margin-top: 16px;
 }
 
-.no-upload {
-    color: red;
-    visibility: hidden;
+.time-estimation-section h2 {
+    margin-right: 16px;
 }
 
 canvas {
   width: 100%;
   max-width: var(--max-width);
-  height: 400px;
+  height: 800px;
   background-color: #fafafa;
   margin-top: 24px;
 }

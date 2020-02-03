@@ -35,5 +35,5 @@ export function plan(path, settings, startPosition) {
 }
 
 export function estimateTime(speedPoints) {
-  return 12.43;
+  return Math.random() * 100;
 }
