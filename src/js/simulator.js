@@ -11,7 +11,8 @@ const maxForcePerDirection = (maxForceX, maxForceY, direction) => {
 function calculateTargetSpeeds(path, settings, start) {
   return path.map(({ position, desiredSpeed }) => ({
     position,
-    targetSpeed: 0
+    finalSpeed: 0,
+    maxSpeed: desiredSpeed,
   }));
 }
 
@@ -28,14 +29,12 @@ function planSegment(start, target, settings) {
     maximumSpeedY,
     accelerationX,
     accelerationY,
-    cuttingSpeed,
-    engravingSpeed
   } = settings;
 
   const startToTarget = target.position.sub(start.position);
   const directionToTarget = startToTarget.unit();
 
-  const maxAccelerationToTarget = maxForcePerDirection(
+  const accelerationToTarget = maxForcePerDirection(
     accelerationX,
     accelerationY,
     directionToTarget
@@ -45,13 +44,14 @@ function planSegment(start, target, settings) {
     maximumSpeedY,
     directionToTarget
   );
+  const speedToTarget = Math.min(maxSpeedToTarget, target.maxSpeed);
 
   const startToPoint1Distance =
-    (Math.pow(maxSpeedToTarget, 2) - Math.pow(start.speed, 2)) /
-    (2 * maxAccelerationToTarget);
+    (Math.pow(speedToTarget, 2) - Math.pow(start.speed, 2)) /
+    (2 * accelerationToTarget);
   const point2ToTargetDistance =
-    (Math.pow(target.targetSpeed, 2) - Math.pow(maxSpeedToTarget, 2)) /
-    (2 * -maxAccelerationToTarget);
+    (Math.pow(target.finalSpeed, 2) - Math.pow(speedToTarget, 2)) /
+    (2 * -accelerationToTarget);
 
   if (startToPoint1Distance + point2ToTargetDistance < startToTarget.mag()) {
     const point2Position = start.position.add(
@@ -65,27 +65,27 @@ function planSegment(start, target, settings) {
       start.position,
       point2Position,
       start.speed,
-      maxAccelerationToTarget
+      accelerationToTarget
     );
     const point2 = makeSpeedPoint(
       point2Position,
       point3Position,
-      maxSpeedToTarget,
+      speedToTarget,
       0
     );
     const point3 = makeSpeedPoint(
       point3Position,
       target.position,
-      maxSpeedToTarget,
-      -maxAccelerationToTarget
+      speedToTarget,
+      -accelerationToTarget
     );
 
     return [point1, point2, point3];
   } else {
     console.log(
       "NO",
-      maxSpeedToTarget,
-      maxAccelerationToTarget,
+      speedToTarget,
+      accelerationToTarget,
       startToPoint1Distance,
       point2ToTargetDistance,
       startToTarget.mag(),
@@ -101,14 +101,14 @@ function toZero(n, precision = 0.000001) {
 }
 
 export function plan(path, settings, startPosition) {
-  const targetSpeeds = calculateTargetSpeeds(path, settings, start);
+  const targetSpeeds = calculateTargetSpeeds(path, settings, startPosition);
 
   var result = [];
   var start = { position: startPosition, speed: 0 };
 
   targetSpeeds.forEach(target => {
     result.push(...planSegment(start, target, settings));
-    start = { position: target.position, speed: target.targetSpeed };
+    start = { position: target.position, speed: target.finalSpeed };
   });
 
   return result;

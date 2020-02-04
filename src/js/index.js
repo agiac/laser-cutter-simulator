@@ -1,182 +1,134 @@
-import { default as V } from "./vector.js/index.js";
+import { default as V } from "./vector.js";
+import * as Simulator from "./simulator";
 
-// const a = V.new(1, 1);
-// const b = V.new(5, 5);
-// const c = b.unit();
+function givePrediction() {
+  const fileData = loadFile();
 
-// console.log(a, b, c, b.mag());
+  //   if (fileData) {
+  const settingsData = loadSettings();
+  const startPosition = V.new(0, 0);
+  const path = [
+    { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed },
+    { position: V.new(200, 0), desiredSpeed: settingsData.cuttingSpeed },
+    { position: V.new(0, 0), desiredSpeed: settingsData.cuttingSpeed },
+    { position: V.new(0, 200), desiredSpeed: settingsData.cuttingSpeed },
+    { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed }
+  ];
+  const timePath = Simulator.plan(path, settingsData, startPosition);
+  const canvas = document.getElementById("canvas");
+  animatePath(path, timePath, canvas);
 
-var canvas = document.createElement("canvas", {});
-canvas.width = 800;
-canvas.height = 800;
+  const timeEstimation = Simulator.estimateTime(timePath);
 
-var ctx = canvas.getContext("2d");
+  const timeEstimationElement = document.getElementById("time-estimation");
+  timeEstimationElement.innerText = `${parseInt(
+    timeEstimation / 60
+  )} min. ${parseInt(timeEstimation % 60)} sec.`;
+  //   }
+}
 
-const useContext = context => fn => (...args) => fn(context, ...args);
+function loadSettings() {
+  return settings.reduce(
+    (res, setting) => ({
+      ...res,
+      [`${setting}`]: parseFloat(document.getElementsByName(setting)[0].value)
+    }),
+    {}
+  );
+}
 
-const onContext = useContext(ctx);
+function loadFile() {
+  const upload = document.getElementsByName("file-upload")[0].files[0];
 
-const circle = onContext((context, x, y, r) => {
-  context.beginPath();
-  context.ellipse(x, y, r, r, 0, 0, 2 * Math.PI);
-  context.stroke();
-});
-
-const settingsData = ({ path, acceleration, maxSpeed }) => ({
-  path,
-  acceleration,
-  maxSpeed
-});
-
-const frameData = ({ settings, position, speed, target }) => ({
-  settings: settingsData({ ...settings }),
-  position,
-  speed,
-  target
-});
-
-const calculateMaximumAcceleration = (axesMaximumAcceleration, direction) => {
-  var acceleration;
-  if (
-    Math.abs(direction.y / direction.x) >
-    Math.abs(axesMaximumAcceleration.y / axesMaximumAcceleration.x)
-  ) {
-    acceleration = Math.abs(axesMaximumAcceleration.y / direction.y);
-  } else {
-    acceleration = Math.abs(axesMaximumAcceleration.x / direction.x);
+  if (upload) {
+    return window.URL.createObjectURL(upload);
   }
-  return acceleration;
-};
 
-const calculateMaximumSpeed = (axesMaximumSpeed, speed) => {
-  var maxSpeed = 1000000000;
-  if (
-    Math.abs(speed.x) > axesMaximumSpeed.x &&
-    Math.abs(speed.y) < axesMaximumSpeed.y
-  ) {
-    maxSpeed = axesMaximumSpeed.x;
-  } else if (
-    Math.abs(speed.y) > axesMaximumSpeed.y &&
-    Math.abs(speed.x) < axesMaximumSpeed.x
-  ) {
-    maxSpeed = axesMaximumSpeed.y;
-  } else if (
-    Math.abs(speed.x) > axesMaximumSpeed.x &&
-    Math.abs(speed.y) > axesMaximumSpeed.y
-  ) {
-    maxSpeed =
-      axesMaximumSpeed.x > axesMaximumSpeed.y
-        ? axesMaximumSpeed.y
-        : axesMaximumSpeed.x;
-  }
-  return maxSpeed;
-};
+  return null;
+}
 
-const drawFrame = frame => {
-  const settings = frame.settings;
-
-  //Draw
-
+function drawFrame(canvas, path, timePath, laserPosition) {
+  const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   ctx.beginPath();
-  settings.path.forEach(p => ctx.lineTo(p.x, p.y));
+  path.forEach(p => ctx.lineTo(p.position.x, p.position.y));
+  ctx.strokeStyle = "black";
   ctx.stroke();
-
-  circle(frame.position.x, frame.position.y, 10);
-
-  //Calculate next frame
-
-  const position = frame.position;
-  const speed = frame.speed;
-  const target = settings.path[frame.target];
-  const targetSpeed = 0;
-
-  // PVector desired = PVector.sub(target,location);
-
-  // float d = desired.mag();
-  // desired.normalize();
-  // if (d < 100) {
-  //   float m = map(d,0,100,0,maxspeed);
-  //   desired.mult(m);
-  // } else {
-  //   desired.mult(maxspeed);
-  // }
-
-  // PVector steer = PVector.sub(desired,velocity);
-  // steer.limit(maxforce);
-  // applyForce(steer);
-
-  const positionToTarget = target.sub(position);
-  const distanceToTarget = positionToTarget.mag();
-  const directionToTarget = positionToTarget.unit();
-  const maxAcceleration = calculateMaximumAcceleration(
-    settings.acceleration,
-    directionToTarget
-  );
-  const distanceToDecelarate =
-    (Math.pow(targetSpeed, 2) - Math.pow(speed.mag(), 2)) /
-    (-2 * maxAcceleration);
-
-  var accelerationMag = maxAcceleration;
-  if (distanceToTarget > distanceToDecelarate) {
-    accelerationMag = maxAcceleration;
-  } else {
-    accelerationMag =
-      (-distanceToTarget / distanceToDecelarate) * maxAcceleration;
-  }
-
-  const acceleration = directionToTarget.scale(accelerationMag);
-  const speedTemp = speed.add(acceleration);
-
-  var nextSpeed = speedTemp.limit(
-    calculateMaximumSpeed(settings.maxSpeed, speedTemp)
-  );
-  var nextPosition = position.add(nextSpeed);
-  var nextTarget = frame.target;
-  if (target.sub(nextPosition).mag() < 1) {
-    nextPosition = target;
-    nextSpeed = V.new(0, 0);
-    nextTarget = (frame.target + 1) % (settings.path.length - 1);
-  }
-
-  const newFrame = frameData({
-    ...frame,
-    position: nextPosition,
-    target: nextTarget,
-    speed: nextSpeed
+  timePath.forEach(p => {
+    ctx.beginPath();
+    ctx.ellipse(p.target.x, p.target.y, 4, 4, 0, 0, 2 * Math.PI);
+    ctx.strokeStyle = "red";
+    ctx.stroke();
   });
+  ctx.beginPath();
+  // ctx.ellipse(laserPosition.x, laserPosition.y, 10, 10, 0, 0, 2 * Math.PI);
+  // ctx.strokeStyle = "black";
+  // ctx.stroke();
+}
 
-  return newFrame;
-};
+function moveLaser(lastPosition, speedPointIdx, timePath, ellapsedTime) {
+  const { start, target, speed, acceleration } = timePath[speedPointIdx];
+  const position = lastPosition ? lastPosition : start;
+  const positionToTargetVec = target.sub(position);
+  const directionToTarget = positionToTargetVec.unit();
+  const ellapsedTimeSeconds = ellapsedTime / 1000;
+  const speedToTarget = directionToTarget
+    .scale(speed)
+    .add(directionToTarget.scale(acceleration))
+    .scale(ellapsedTimeSeconds);
 
-const draw = frame => () => {
-  const newFrame = drawFrame(frame);
+  const nextPosition = position.add(speedToTarget);
 
-  window.requestAnimationFrame(draw(newFrame));
-};
+  return Math.abs(target.sub(nextPosition).mag()) < 1
+    ? [target, (speedPointIdx + 1) % timePath.length]
+    : [nextPosition, speedPointIdx];
+}
 
-const settings = settingsData({
-  path: [
-    V.new(100, 100),
-    V.new(100, 700),
-    V.new(700, 700),
-    V.new(700, 100),
-    V.new(100, 100)
-  ],
-  acceleration: V.new(0.1, 0.1),
-  maxSpeed: V.new(10, 10)
-});
+function animatePath(path, timePath, canvas) {
+  const draw = (position, speedPointIdx, startTime) => () => {
+    const now = performance.now();
+    const ellapsedTime = now - startTime;
 
-window.requestAnimationFrame(
-  draw(
-    frameData({
-      settings,
-      position: V.new(0, 0),
-      speed: V.new(0, 0),
-      target: 0
-    })
-  )
+    const [nextPosition, nextIdx] = moveLaser(
+      position,
+      speedPointIdx,
+      timePath,
+      ellapsedTime
+    );
+
+    drawFrame(canvas, path, timePath, nextPosition);
+
+    window.requestAnimationFrame(draw(nextPosition, nextIdx, now));
+  };
+
+  window.requestAnimationFrame(draw(null, 0, 0, performance.now()));
+}
+
+/// INIT
+
+const settings = Object.freeze([
+  "maximumSpeedX",
+  "maximumSpeedY",
+  "accelerationX",
+  "accelerationY",
+  "cuttingSpeed",
+  "engravingSpeed"
+]);
+
+settings.map(setting =>
+  document
+    .getElementsByName(setting)[0]
+    .addEventListener("change", givePrediction)
 );
 
-document.body.appendChild(canvas);
+document
+  .getElementsByName("file-upload")[0]
+  .addEventListener("change", givePrediction);
+
+window.onresize = () => {
+  const canvas = document.getElementById("canvas");
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+};
+
+///
