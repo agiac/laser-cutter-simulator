@@ -83,6 +83,7 @@ function planSegment(start, target, settings) {
     return [point1, point2, point3];
   } else {
     console.log(
+      "NO",
       maxSpeedToTarget,
       maxAccelerationToTarget,
       startToPoint1Distance,
@@ -92,6 +93,11 @@ function planSegment(start, target, settings) {
       accelerationY
     );
   }
+}
+
+function toZero(n, precision = 0.000001) {
+  if (Math.abs(n) < precision) return 0;
+  return n;
 }
 
 export function plan(path, settings, startPosition) {
@@ -112,7 +118,9 @@ export function estimateTime(speedPoints) {
   return speedPoints.reduce((prev, curr) => {
     const direction = curr.target.sub(curr.start);
     const dist = direction.mag();
-    const finalSpeed = curr.speed + curr.acceleration * dist;
+    const finalSpeed = Math.sqrt(
+      toZero(Math.pow(curr.speed, 2) + 2 * curr.acceleration * dist)
+    );
     const time = (2 * dist) / (curr.speed + finalSpeed);
     return prev + time;
   }, 0);

@@ -47,15 +47,23 @@ function loadFile() {
   return null;
 }
 
-function drawFrame(canvas, path, laserPosition) {
+function drawFrame(canvas, path, timePath, laserPosition) {
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.beginPath();
   path.forEach(p => ctx.lineTo(p.position.x, p.position.y));
+  ctx.strokeStyle = "black";
   ctx.stroke();
+  timePath.forEach(p => {
+    ctx.beginPath();
+    ctx.ellipse(p.target.x, p.target.y, 4, 4, 0, 0, 2 * Math.PI);
+    ctx.strokeStyle = "red";
+    ctx.stroke();
+  });
   ctx.beginPath();
-  ctx.ellipse(laserPosition.x, laserPosition.y, 10, 10, 0, 0, 2 * Math.PI);
-  ctx.stroke();
+  // ctx.ellipse(laserPosition.x, laserPosition.y, 10, 10, 0, 0, 2 * Math.PI);
+  // ctx.strokeStyle = "black";
+  // ctx.stroke();
 }
 
 function moveLaser(lastPosition, speedPointIdx, timePath, ellapsedTime) {
@@ -88,7 +96,7 @@ function animatePath(path, timePath, canvas) {
       ellapsedTime
     );
 
-    drawFrame(canvas, path, nextPosition);
+    drawFrame(canvas, path, timePath, nextPosition);
 
     window.requestAnimationFrame(draw(nextPosition, nextIdx, now));
   };
