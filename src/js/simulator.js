@@ -12,23 +12,25 @@ function calculateTargetSpeeds(path, settings, start) {
   return path.map(({ position, desiredSpeed }) => ({
     position,
     finalSpeed: 0,
-    maxSpeed: desiredSpeed,
+    maxSpeed: desiredSpeed
   }));
 }
 
-function planSegment(start, target, settings) {
-  const makeSpeedPoint = (start, target, speed, acceleration) => ({
+function makeSpeedPoint(start, target, speed, acceleration) {
+  return {
     start,
     target,
     speed,
     acceleration
-  });
+  };
+}
 
+function planSegment(start, target, settings) {
   const {
     maximumSpeedX,
     maximumSpeedY,
     accelerationX,
-    accelerationY,
+    accelerationY
   } = settings;
 
   const startToTarget = target.position.sub(start.position);
@@ -39,26 +41,24 @@ function planSegment(start, target, settings) {
     accelerationY,
     directionToTarget
   );
-  const maxSpeedToTarget = maxForcePerDirection(
-    maximumSpeedX,
-    maximumSpeedY,
-    directionToTarget
+  const speedToTarget = Math.min(
+    maxForcePerDirection(maximumSpeedX, maximumSpeedY, directionToTarget),
+    target.maxSpeed
   );
-  const speedToTarget = Math.min(maxSpeedToTarget, target.maxSpeed);
 
-  const startToPoint1Distance =
+  const startToPoint2Distance =
     (Math.pow(speedToTarget, 2) - Math.pow(start.speed, 2)) /
     (2 * accelerationToTarget);
-  const point2ToTargetDistance =
+  const point3ToTargetDistance =
     (Math.pow(target.finalSpeed, 2) - Math.pow(speedToTarget, 2)) /
     (2 * -accelerationToTarget);
 
-  if (startToPoint1Distance + point2ToTargetDistance < startToTarget.mag()) {
+  if (startToPoint2Distance + point3ToTargetDistance < startToTarget.mag()) {
     const point2Position = start.position.add(
-      directionToTarget.scale(startToPoint1Distance)
+      directionToTarget.scale(startToPoint2Distance)
     );
     const point3Position = target.position.sub(
-      directionToTarget.scale(point2ToTargetDistance)
+      directionToTarget.scale(point3ToTargetDistance)
     );
 
     const point1 = makeSpeedPoint(
@@ -82,16 +82,30 @@ function planSegment(start, target, settings) {
 
     return [point1, point2, point3];
   } else {
-    console.log(
-      "NO",
-      speedToTarget,
-      accelerationToTarget,
-      startToPoint1Distance,
-      point2ToTargetDistance,
-      startToTarget.mag(),
-      accelerationX,
-      accelerationY
+    //https://math.stackexchange.com/questions/53698/determining-the-peak-speed-of-an-accelerating-decelerating-body-between-two-poin
+    const point2Speed = Math.sqrt(
+      accelerationToTarget * startToTarget.mag() +
+        (Math.pow(start.speed, 2) + Math.pow(target.finalSpeed, 2)) / 2
     );
+    const startToPoint2Distance =
+      (Math.pow(point2Speed, 2) - Math.pow(start.speed, 2)) /
+      (2 * accelerationToTarget);
+    const point2Position = start.position.add(directionToTarget.scale(startToPoint2Distance));
+
+    const point1 = makeSpeedPoint(
+      start.position,
+      point2Position,
+      start.speed,
+      accelerationToTarget
+    );
+    const point2 = makeSpeedPoint(
+      point2Position,
+      target.position,
+      point2Speed,
+      -accelerationToTarget
+    );
+
+    return [point1, point2];
   }
 }
 

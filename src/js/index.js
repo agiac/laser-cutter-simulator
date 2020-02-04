@@ -14,6 +14,21 @@ function givePrediction() {
     { position: V.new(0, 200), desiredSpeed: settingsData.cuttingSpeed },
     { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed }
   ];
+
+  // const cX = 150;
+  // const cY = 150;
+  // const radius = 100;
+  // const path = [];
+
+  // for (var a = 0; a <= 2 * Math.PI; a += (2 * Math.PI) / 100) {
+  //   const x = cX + Math.cos(a) * radius;
+  //   const y = cY + Math.sin(a) * radius;
+  //   path.push({
+  //     position: V.new(x, y),
+  //     desiredSpeed: settingsData.cuttingSpeed
+  //   });
+  // }
+
   const timePath = Simulator.plan(path, settingsData, startPosition);
   const canvas = document.getElementById("canvas");
   animatePath(path, timePath, canvas);
@@ -111,8 +126,8 @@ const settings = Object.freeze([
   "maximumSpeedY",
   "accelerationX",
   "accelerationY",
-  "cuttingSpeed",
-  "engravingSpeed"
+  "cuttingSpeed"
+  // "engravingSpeed"
 ]);
 
 settings.map(setting =>

@@ -57,6 +57,12 @@ const Vector = Object.freeze({
       return this.unit().scale(max);
     }
     return this.new(this.x, this.y);
+  },
+  /**
+   * @returns {Number}
+   */
+  cross({ x, y }) {
+    return this.x * y - this.y * x;
   }
 });
 
