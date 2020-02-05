@@ -87,7 +87,6 @@ function canReachTargetSpeed(
   targetSpeed,
   settings
 ) {
-  return true;
   const startToTargetVector = targetPosition.sub(startPosition);
   const acceleration = maxForcePerDirection(
     settings.accelerationX,
@@ -101,7 +100,11 @@ function canReachTargetSpeed(
   );
   const displacement = startToTargetVector.mag();
   const finalMaxSpeed = Math.sqrt(2 * acceleration * displacement);
-  return Math.min(finalMaxSpeed, maxSpeed) >= Math.abs(startSpeed - targetSpeed);
+
+  return (
+    Math.min(finalMaxSpeed, maxSpeed) >=
+    Math.abs(Math.min(startSpeed, maxSpeed) - Math.min(targetSpeed, maxSpeed))
+  );
 }
 
 function calculateTargetSpeeds(path, settings, start) {
@@ -143,13 +146,21 @@ function calculateTargetSpeeds(path, settings, start) {
       result.push(
         resultPoint(
           current.position,
-          0,
-          // current.maxJunctionSpeed,
-          path[i].desiredSpeed
+          Math.min(
+            current.maxJunctionSpeed,
+            path[i].desiredSpeed,
+            maxForcePerDirection(
+              settings.maximumSpeedX,
+              settings.maximumSpeedY,
+              next.position.sub(current.position).unit()
+            )
+          ), path[i].desiredSpeed
         )
       );
     } else {
-      console.log("Hmmm...");
+      console.log(
+        `Hmmm... ${current.maxJunctionSpeed}, ${next.maxJunctionSpeed}`
+      );
     }
   }
 

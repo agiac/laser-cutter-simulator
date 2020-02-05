@@ -16,30 +16,30 @@ function givePrediction() {
   //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed }
   // ];
 
-  const path = [
-    { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed },
-    { position: V.new(200, 100), desiredSpeed: settingsData.cuttingSpeed },
-    { position: V.new(200, 0), desiredSpeed: settingsData.cuttingSpeed },
-    { position: V.new(0, 0), desiredSpeed: settingsData.cuttingSpeed },
-    { position: V.new(100, 100), desiredSpeed: settingsData.cuttingSpeed },
-    { position: V.new(0, 200), desiredSpeed: settingsData.cuttingSpeed },
-    { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed }
-  ];
+  // const path = [
+  //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed },
+  //   { position: V.new(200, 100), desiredSpeed: settingsData.cuttingSpeed },
+  //   { position: V.new(200, 0), desiredSpeed: settingsData.cuttingSpeed },
+  //   { position: V.new(0, 0), desiredSpeed: settingsData.cuttingSpeed },
+  //   { position: V.new(100, 100), desiredSpeed: settingsData.cuttingSpeed },
+  //   { position: V.new(0, 200), desiredSpeed: settingsData.cuttingSpeed },
+  //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed }
+  // ];
 
-  // const cX = 100;
-  // const cY = 100;
-  // const radius = 100;
-  // const sides = 51;
-  // const path = [];
+  const cX = 100;
+  const cY = 100;
+  const radius = 100;
+  const sides = 40;
+  const path = [];
 
-  // for (var a = 0; a <= 2 * Math.PI; a += (2 * Math.PI) / sides) {
-  //   const x = cX + Math.cos(a) * radius;
-  //   const y = cY + Math.sin(a) * radius;
-  //   path.push({
-  //     position: V.new(x, y),
-  //     desiredSpeed: settingsData.cuttingSpeed
-  //   });
-  // }
+  for (var a = 0; a <= 2 * Math.PI; a += (2 * Math.PI) / sides) {
+    const x = cX + Math.cos(a) * radius;
+    const y = cY + Math.sin(a) * radius;
+    path.push({
+      position: V.new(x, y),
+      desiredSpeed: settingsData.cuttingSpeed
+    });
+  }
 
   const timePath = Simulator.plan(path, settingsData, startPosition);
   const canvas = document.getElementById("canvas");
