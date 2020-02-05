@@ -7,33 +7,35 @@ function givePrediction() {
   //   if (fileData) {
   const settingsData = loadSettings();
   const startPosition = V.new(0, 0);
-  const path = [
-    { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed },
-    { position: V.new(200, 0), desiredSpeed: settingsData.cuttingSpeed },
-    { position: V.new(0, 0), desiredSpeed: settingsData.cuttingSpeed },
-    { position: V.new(0, 200), desiredSpeed: settingsData.cuttingSpeed },
-    { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed }
-  ];
 
-  // const cX = 150;
-  // const cY = 150;
-  // const radius = 100;
-  // const path = [];
+  // const path = [
+  //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed },
+  //   { position: V.new(200, 0), desiredSpeed: settingsData.cuttingSpeed },
+  //   { position: V.new(0, 0), desiredSpeed: settingsData.cuttingSpeed },
+  //   { position: V.new(0, 200), desiredSpeed: settingsData.cuttingSpeed },
+  //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed }
+  // ];
 
-  // for (var a = 0; a <= 2 * Math.PI; a += (2 * Math.PI) / 100) {
-  //   const x = cX + Math.cos(a) * radius;
-  //   const y = cY + Math.sin(a) * radius;
-  //   path.push({
-  //     position: V.new(x, y),
-  //     desiredSpeed: settingsData.cuttingSpeed
-  //   });
-  // }
+  const cX = 100;
+  const cY = 100;
+  const radius = 100;
+  const sides = 10;
+  const path = [];
+
+  for (var a = 0; a <= 2 * Math.PI; a += (2 * Math.PI) / sides) {
+    const x = cX + Math.cos(a) * radius;
+    const y = cY + Math.sin(a) * radius;
+    path.push({
+      position: V.new(x, y),
+      desiredSpeed: settingsData.cuttingSpeed
+    });
+  }
 
   const timePath = Simulator.plan(path, settingsData, startPosition);
   const canvas = document.getElementById("canvas");
   animatePath(path, timePath, canvas);
 
-  const timeEstimation = Simulator.estimateTime(timePath);
+  const timeEstimation = Simulator.estimateTime(timePath); //132.423421341234213 seconds
 
   const timeEstimationElement = document.getElementById("time-estimation");
   timeEstimationElement.innerText = `${parseInt(

@@ -1,19 +1,85 @@
 import Vector from "./vector";
 
-const maxForcePerDirection = (maxForceX, maxForceY, direction) => {
-  if (Math.abs(direction.y / direction.x) > Math.abs(maxForceY / maxForceX)) {
-    return Math.abs(maxForceY / direction.y);
+function maxForcePerDirection(maxForceX, maxForceY, unitVector) {
+  return Math.min(
+    Math.abs(maxForceX / unitVector.x) || 1000000000,
+    Math.abs(maxForceY / unitVector.y) || 1000000000
+  );
+}
+
+/**
+ *
+ * From https://github.com/gnea/grbl/blob/master/grbl/planner.c#L407
+ * @param {Vector} uV1 Unit vector
+ * @param {Vector} uV2 Unit vector
+ * @returns {Number}
+ */
+function calcMaxJunctionSpeed(uV1, uV2, settings) {
+  //TODO add in advanced settings minimumJunctionSpeed and junctionDeviation
+  const minimumJunctionSpeed = 0;
+  const junctionDeviation = 0.01;
+
+  const junction_cos_theta = -uV1.x * uV2.x - uV1.y * uV2.y;
+  const junction_unit_vec = uV2.sub(uV1).unit();
+
+  if (junction_cos_theta > 0.999999) {
+    //  For a 0 degree acute junction, just set minimum junction speed.
+    return minimumJunctionSpeed;
   } else {
-    return Math.abs(maxForceX / direction.x);
+    if (junction_cos_theta < -0.999999) {
+      // Junction is a straight line or 180 degrees. Junction speed is infinite.
+      return 1000000000;
+    } else {
+      const junction_acceleration = maxForcePerDirection(
+        settings.accelerationX,
+        settings.accelerationY,
+        junction_unit_vec
+      );
+      const sin_theta_d2 = Math.sqrt(0.5 * (1.0 - junction_cos_theta));
+      return Math.max(
+        minimumJunctionSpeed * minimumJunctionSpeed,
+        Math.sqrt(
+          (junction_acceleration * junctionDeviation * sin_theta_d2) /
+            (1.0 - sin_theta_d2)
+        )
+      );
+    }
   }
-};
+}
 
 function calculateTargetSpeeds(path, settings, start) {
-  return path.map(({ position, desiredSpeed }) => ({
-    position,
+  var p0, p1, p2;
+  var result = [];
+
+  p0 = start;
+
+  for (var i = 0; i < path.length - 1; i++) {
+    p1 = path[i].position;
+    p2 = path[i + 1].position;
+    const maxJunctionSpeed = toZero(
+      calcMaxJunctionSpeed(p1.sub(p0).unit(), p2.sub(p1).unit(), settings)
+    );
+    result.push({
+      position: p1,
+      finalSpeed: 0,
+      maxSpeed: path[i].desiredSpeed
+    });
+    p0 = p1;
+  }
+
+  result.push({
+    position: path[path.length - 1].position,
     finalSpeed: 0,
-    maxSpeed: desiredSpeed
-  }));
+    maxSpeed: path[path.length - 1].desiredSpeed
+  });
+
+  return result;
+
+  // return path.map(({ position, desiredSpeed }) => ({
+  //   position,
+  //   finalSpeed: 0,
+  //   maxSpeed: desiredSpeed
+  // }));
 }
 
 function makeSpeedPoint(start, target, speed, acceleration) {
@@ -90,7 +156,9 @@ function planSegment(start, target, settings) {
     const startToPoint2Distance =
       (Math.pow(point2Speed, 2) - Math.pow(start.speed, 2)) /
       (2 * accelerationToTarget);
-    const point2Position = start.position.add(directionToTarget.scale(startToPoint2Distance));
+    const point2Position = start.position.add(
+      directionToTarget.scale(startToPoint2Distance)
+    );
 
     const point1 = makeSpeedPoint(
       start.position,
