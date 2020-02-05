@@ -47,7 +47,7 @@ function calcMaxJunctionSpeed(uV1, uV2, settings) {
   }
 }
 
-function calculateTargetSpeeds(path, settings, start) {
+function calculateMaximumJunctionSpeeds(path, settings, start) {
   var p0, p1, p2;
   var result = [];
 
@@ -61,19 +61,100 @@ function calculateTargetSpeeds(path, settings, start) {
     );
     result.push({
       position: p1,
-      finalSpeed: 0,
-      maxSpeed: path[i].desiredSpeed
+      maxJunctionSpeed
     });
     p0 = p1;
   }
 
   result.push({
     position: path[path.length - 1].position,
-    finalSpeed: 0,
-    maxSpeed: path[path.length - 1].desiredSpeed
+    maxJunctionSpeed: 0
   });
 
   return result;
+}
+
+function canReachTargetSpeed(
+  startPosition,
+  startSpeed,
+  targetPosition,
+  targetSpeed
+) {
+  return true;
+}
+
+function calculateTargetSpeeds(path, settings, start) {
+  const maxJunctionSpeeds = calculateMaximumJunctionSpeeds(
+    path,
+    settings,
+    start
+  );
+
+  const resultPoint = (position, finalSpeed, maxSpeed) => ({
+    position,
+    finalSpeed,
+    maxSpeed
+  });
+
+  const result = [];
+  result.push(
+    resultPoint(
+      maxJunctionSpeeds[maxJunctionSpeeds.length - 1].position,
+      maxJunctionSpeeds[maxJunctionSpeeds.length - 1].maxJunctionSpeed,
+      path[path.length - 1].desiredSpeed
+    )
+  );
+
+  for (var i = maxJunctionSpeeds.length - 2; i >= 0; i--) {
+    const next = maxJunctionSpeeds[i + 1];
+    const current = maxJunctionSpeeds[i];
+
+    //Check if the current point max junction speed allows the reach of the previous point speed
+    if (
+      canReachTargetSpeed(
+        current.position,
+        current.maxJunctionSpeed,
+        next.position,
+        next.maxJunctionSpeed
+      )
+    ) {
+      result.push(
+        resultPoint(
+          current.position,
+          current.maxJunctionSpeed,
+          path[i].desiredSpeed
+        )
+      );
+    }
+  }
+
+  return result.reverse();
+  // var p0, p1, p2;
+  // var result = [];
+
+  // p0 = start;
+
+  // for (var i = 0; i < path.length - 1; i++) {
+  //   p1 = path[i].position;
+  //   p2 = path[i + 1].position;
+  //   const maxJunctionSpeed = toZero(
+  //     calcMaxJunctionSpeed(p1.sub(p0).unit(), p2.sub(p1).unit(), settings)
+  //   );
+  //   result.push({
+  //     position: p1,
+  //     finalSpeed: 0,
+  //     maxSpeed: path[i].desiredSpeed
+  //   });
+  //   p0 = p1;
+  // }
+
+  // result.push({
+  //   position: path[path.length - 1].position,
+  //   finalSpeed: 0,
+  //   maxSpeed: path[path.length - 1].desiredSpeed
+  // });
+
+  // return result;
 
   // return path.map(({ position, desiredSpeed }) => ({
   //   position,
