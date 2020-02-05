@@ -73,14 +73,35 @@ function calculateMaximumJunctionSpeeds(path, settings, start) {
 
   return result;
 }
-
+/**
+ *
+ * @param {Vector} startPosition
+ * @param {Number} startSpeed
+ * @param {Vector} targetPosition
+ * @param {Number} targetSpeed
+ */
 function canReachTargetSpeed(
   startPosition,
   startSpeed,
   targetPosition,
-  targetSpeed
+  targetSpeed,
+  settings
 ) {
   return true;
+  const startToTargetVector = targetPosition.sub(startPosition);
+  const acceleration = maxForcePerDirection(
+    settings.accelerationX,
+    settings.accelerationY,
+    startToTargetVector.unit()
+  );
+  const maxSpeed = maxForcePerDirection(
+    settings.maximumSpeedX,
+    settings.maximumSpeedY,
+    startToTargetVector.unit()
+  );
+  const displacement = startToTargetVector.mag();
+  const finalMaxSpeed = Math.sqrt(2 * acceleration * displacement);
+  return Math.min(finalMaxSpeed, maxSpeed) >= Math.abs(startSpeed - targetSpeed);
 }
 
 function calculateTargetSpeeds(path, settings, start) {
@@ -115,16 +136,20 @@ function calculateTargetSpeeds(path, settings, start) {
         current.position,
         current.maxJunctionSpeed,
         next.position,
-        next.maxJunctionSpeed
+        next.maxJunctionSpeed,
+        settings
       )
     ) {
       result.push(
         resultPoint(
           current.position,
-          current.maxJunctionSpeed,
+          0,
+          // current.maxJunctionSpeed,
           path[i].desiredSpeed
         )
       );
+    } else {
+      console.log("Hmmm...");
     }
   }
 
