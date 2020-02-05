@@ -111,7 +111,8 @@ function calcMaxSpeedToReachTargetSpeed(
   startPosition,
   targetPosition,
   targetSpeed,
-  settings
+  settings,
+  decelerate
 ) {
   const startToTargetVector = targetPosition.sub(startPosition);
   const acceleration = maxForcePerDirection(
@@ -125,10 +126,14 @@ function calcMaxSpeedToReachTargetSpeed(
     startToTargetVector.unit()
   );
   const displacement = startToTargetVector.mag();
-  return Math.sqrt(
+  const result = Math.sqrt(
     Math.pow(Math.min(targetSpeed, maxSpeed), 2) -
-      2 * acceleration * displacement
+      2 * (decelerate ? -1 : 1) * acceleration * displacement
   );
+  if (!result) {
+    console.log("nnnnnnnnnnnnnn");
+  }
+  return result;
 }
 
 function calculateTargetSpeeds(path, settings, start) {
@@ -167,6 +172,20 @@ function calculateTargetSpeeds(path, settings, start) {
         settings
       )
     ) {
+      if (
+        !Math.min(
+          current.maxJunctionSpeed,
+          path[i].desiredSpeed,
+          maxForcePerDirection(
+            settings.maximumSpeedX,
+            settings.maximumSpeedY,
+            next.position.sub(current.position).unit()
+          )
+        )
+      ) {
+        console.log("ZZZZZZZZZZZZZZ");
+      }
+
       result.push(
         resultPoint(
           current.position,
@@ -183,19 +202,19 @@ function calculateTargetSpeeds(path, settings, start) {
         )
       );
     } else {
-      console.log(
-        `Hmmm... ${current.maxJunctionSpeed}, ${next.maxJunctionSpeed}`
-      );
       const maxSpeedToReachTargetSpeed = calcMaxSpeedToReachTargetSpeed(
         current.position,
         next.position,
         next.maxJunctionSpeed,
-        settings
+        settings,
+        current.maxJunctionSpeed > next.maxJunctionSpeed
       );
 
-      if (maxSpeedToReachTargetSpeed < 0) {
-        console.log("OH SNAP...");
-      } else {
+      if (maxSpeedToReachTargetSpeed >= 0) {
+        if (!maxSpeedToReachTargetSpeed) {
+          console.log("llllllllllllllllllllll");
+        }
+
         result.push(
           resultPoint(
             current.position,
@@ -203,6 +222,8 @@ function calculateTargetSpeeds(path, settings, start) {
             path[i].desiredSpeed
           )
         );
+      } else {
+        console.log("OH SNAP...");
       }
     }
   }
@@ -272,34 +293,41 @@ function planSegment(start, target, settings) {
     target.maxSpeed
   );
 
-  const startToPoint2Distance =
+  var startToPoint2Distance =
     (Math.pow(speedToTarget, 2) - Math.pow(start.speed, 2)) /
     (2 * accelerationToTarget);
-  const point3ToTargetDistance =
+  var point3ToTargetDistance =
     (Math.pow(target.finalSpeed, 2) - Math.pow(speedToTarget, 2)) /
     (2 * -accelerationToTarget);
 
+  var point2Position, point3Position;
+  var point1, point2, point3;
+
   if (startToPoint2Distance + point3ToTargetDistance < startToTarget.mag()) {
-    const point2Position = start.position.add(
+    point2Position = start.position.add(
       directionToTarget.scale(startToPoint2Distance)
     );
-    const point3Position = target.position.sub(
+    point3Position = target.position.sub(
       directionToTarget.scale(point3ToTargetDistance)
     );
 
-    const point1 = makeSpeedPoint(
+    if (!point2Position.x || !point3Position.x || !target.position.x) {
+      console.log("HDFOISD");
+    }
+
+    point1 = makeSpeedPoint(
       start.position,
       point2Position,
       start.speed,
       accelerationToTarget
     );
-    const point2 = makeSpeedPoint(
+    point2 = makeSpeedPoint(
       point2Position,
       point3Position,
       speedToTarget,
       0
     );
-    const point3 = makeSpeedPoint(
+    point3 = makeSpeedPoint(
       point3Position,
       target.position,
       speedToTarget,
@@ -313,20 +341,24 @@ function planSegment(start, target, settings) {
       accelerationToTarget * startToTarget.mag() +
         (Math.pow(start.speed, 2) + Math.pow(target.finalSpeed, 2)) / 2
     );
-    const startToPoint2Distance =
+    startToPoint2Distance =
       (Math.pow(point2Speed, 2) - Math.pow(start.speed, 2)) /
       (2 * accelerationToTarget);
-    const point2Position = start.position.add(
+    point2Position = start.position.add(
       directionToTarget.scale(startToPoint2Distance)
     );
 
-    const point1 = makeSpeedPoint(
+    if (!point2Position.x || !target.position.x) {
+      console.log(startToPoint2Distance, point2Speed, start.speed, accelerationToTarget);
+    }
+
+    point1 = makeSpeedPoint(
       start.position,
       point2Position,
       start.speed,
       accelerationToTarget
     );
-    const point2 = makeSpeedPoint(
+    point2 = makeSpeedPoint(
       point2Position,
       target.position,
       point2Speed,
