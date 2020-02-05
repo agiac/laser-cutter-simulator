@@ -107,6 +107,30 @@ function canReachTargetSpeed(
   );
 }
 
+function calcMaxSpeedToReachTargetSpeed(
+  startPosition,
+  targetPosition,
+  targetSpeed,
+  settings
+) {
+  const startToTargetVector = targetPosition.sub(startPosition);
+  const acceleration = maxForcePerDirection(
+    settings.accelerationX,
+    settings.accelerationY,
+    startToTargetVector.unit()
+  );
+  const maxSpeed = maxForcePerDirection(
+    settings.maximumSpeedX,
+    settings.maximumSpeedY,
+    startToTargetVector.unit()
+  );
+  const displacement = startToTargetVector.mag();
+  return Math.sqrt(
+    Math.pow(Math.min(targetSpeed, maxSpeed), 2) -
+      2 * acceleration * displacement
+  );
+}
+
 function calculateTargetSpeeds(path, settings, start) {
   const maxJunctionSpeeds = calculateMaximumJunctionSpeeds(
     path,
@@ -154,13 +178,32 @@ function calculateTargetSpeeds(path, settings, start) {
               settings.maximumSpeedY,
               next.position.sub(current.position).unit()
             )
-          ), path[i].desiredSpeed
+          ),
+          path[i].desiredSpeed
         )
       );
     } else {
       console.log(
         `Hmmm... ${current.maxJunctionSpeed}, ${next.maxJunctionSpeed}`
       );
+      const maxSpeedToReachTargetSpeed = calcMaxSpeedToReachTargetSpeed(
+        current.position,
+        next.position,
+        next.maxJunctionSpeed,
+        settings
+      );
+
+      if (maxSpeedToReachTargetSpeed < 0) {
+        console.log("OH SNAP...");
+      } else {
+        result.push(
+          resultPoint(
+            current.position,
+            maxSpeedToReachTargetSpeed,
+            path[i].desiredSpeed
+          )
+        );
+      }
     }
   }
 
