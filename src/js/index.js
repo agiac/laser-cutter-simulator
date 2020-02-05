@@ -142,11 +142,15 @@ const settings = Object.freeze([
   // "engravingSpeed"
 ]);
 
-settings.map(setting =>
-  document
-    .getElementsByName(setting)[0]
-    .addEventListener("change", givePrediction)
-);
+settings.forEach(setting => {
+  const input = document.getElementsByName(setting)[0];
+  input.value = localStorage[setting] || input.value;
+  input.addEventListener("change", givePrediction);
+  input.addEventListener(
+    "change",
+    e => (localStorage[setting] = e.target.value)
+  );
+});
 
 document
   .getElementsByName("file-upload")[0]
