@@ -83,9 +83,9 @@ function drawFrame(canvas, path, timePath, laserPosition) {
   ctx.stroke();
   timePath.forEach(p => {
     ctx.beginPath();
-    ctx.ellipse(p.target.x, p.target.y, 4, 4, 0, 0, 2 * Math.PI);
-    ctx.strokeStyle = "red";
-    ctx.stroke();
+    ctx.ellipse(p.target.x, p.target.y, 2, 2, 0, 0, 2 * Math.PI);
+    ctx.fillStyle = "red";
+    ctx.fill();
   });
   ctx.beginPath();
   // ctx.ellipse(laserPosition.x, laserPosition.y, 10, 10, 0, 0, 2 * Math.PI);
@@ -138,8 +138,10 @@ const settings = Object.freeze([
   "maximumSpeedY",
   "accelerationX",
   "accelerationY",
-  "cuttingSpeed"
-  // "engravingSpeed"
+  "minimumJunctionSpeed",
+  "junctionDeviation",
+  "cuttingSpeed",
+  // "engravingSpeed",
 ]);
 
 settings.forEach(setting => {

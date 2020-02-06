@@ -40,6 +40,22 @@ input {
   margin-left: auto;
 }
 
+.settings h5 {
+  margin-bottom: 12px;
+}
+
+.advanced {
+  margin-left: 12px;
+  /* max-height: 0px;
+  overflow: hidden;
+  transition: max-height .25s ease-in-out; */
+}
+
+.advanced label {
+  width: calc(var(--column-width) - 12px);
+  font-size: smaller;
+}
+
 #file-upload {
   width: var(--column-width);
 }

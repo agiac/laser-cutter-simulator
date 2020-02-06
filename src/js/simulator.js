@@ -15,9 +15,7 @@ function maxForcePerDirection(maxForceX, maxForceY, unitVector) {
  * @returns {Number}
  */
 function calcMaxJunctionSpeed(uV1, uV2, settings) {
-  //TODO add in advanced settings minimumJunctionSpeed and junctionDeviation
-  const minimumJunctionSpeed = 0;
-  const junctionDeviation = 0.01;
+  const {minimumJunctionSpeed, junctionDeviation} = settings;
 
   const junction_cos_theta = -uV1.x * uV2.x - uV1.y * uV2.y;
   const junction_unit_vec = uV2.sub(uV1).unit();
@@ -156,7 +154,6 @@ function calculateTargetSpeeds(path, settings, start) {
   );
 
   for (var i = maxJunctionSpeeds.length - 2; i >= 0; i--) {
-    // const next = maxJunctionSpeeds[i + 1]; //USE PREVIOUSLY CALCULATED VALUE IN RESULT ????
     const next = result[result.length-1];
 
     const current = maxJunctionSpeeds[i];
