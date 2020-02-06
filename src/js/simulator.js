@@ -1,5 +1,3 @@
-import Vector from "./vector";
-
 function toZero(n, precision = 0.000001) {
   if (Math.abs(n) < precision) return 0;
   return n;
@@ -201,14 +199,11 @@ function calculateJunctionSpeeds(path, settings, start) {
         )
       );
     } else {
-      const maxSpeedForTarget = calculateMaxSpeedToReachTargetSpeed(
-        current.position,
-        next.position,
-        desiredFinalSpeed,
-        settings
+      alert(
+        "Oh no, looks like you hit the only unhandled scenario! Take a screenshot and let Alberto know."
       );
 
-      console.log("OH SNAP...");
+      break;
 
       //TODO Recalc previous points speed
     }
