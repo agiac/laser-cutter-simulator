@@ -130,9 +130,6 @@ function calcMaxSpeedToReachTargetSpeed(
     Math.pow(Math.min(targetSpeed, maxSpeed), 2) -
       2 * (decelerate ? -1 : 1) * acceleration * displacement
   );
-  if (!result) {
-    console.log("nnnnnnnnnnnnnn");
-  }
   return result;
 }
 
@@ -159,7 +156,9 @@ function calculateTargetSpeeds(path, settings, start) {
   );
 
   for (var i = maxJunctionSpeeds.length - 2; i >= 0; i--) {
-    const next = maxJunctionSpeeds[i + 1];
+    // const next = maxJunctionSpeeds[i + 1]; //USE PREVIOUSLY CALCULATED VALUE IN RESULT ????
+    const next = result[result.length-1];
+
     const current = maxJunctionSpeeds[i];
 
     //Check if the current point max junction speed allows the reach of the previous point speed
@@ -168,24 +167,10 @@ function calculateTargetSpeeds(path, settings, start) {
         current.position,
         current.maxJunctionSpeed,
         next.position,
-        next.maxJunctionSpeed,
+        next.finalSpeed,
         settings
       )
     ) {
-      if (
-        !Math.min(
-          current.maxJunctionSpeed,
-          path[i].desiredSpeed,
-          maxForcePerDirection(
-            settings.maximumSpeedX,
-            settings.maximumSpeedY,
-            next.position.sub(current.position).unit()
-          )
-        )
-      ) {
-        console.log("ZZZZZZZZZZZZZZ");
-      }
-
       result.push(
         resultPoint(
           current.position,
@@ -205,15 +190,12 @@ function calculateTargetSpeeds(path, settings, start) {
       const maxSpeedToReachTargetSpeed = calcMaxSpeedToReachTargetSpeed(
         current.position,
         next.position,
-        next.maxJunctionSpeed,
+        next.finalSpeed,
         settings,
-        current.maxJunctionSpeed > next.maxJunctionSpeed
+        current.maxJunctionSpeed > next.finalSpeed
       );
 
       if (maxSpeedToReachTargetSpeed >= 0) {
-        if (!maxSpeedToReachTargetSpeed) {
-          console.log("llllllllllllllllllllll");
-        }
 
         result.push(
           resultPoint(
@@ -229,38 +211,6 @@ function calculateTargetSpeeds(path, settings, start) {
   }
 
   return result.reverse();
-  // var p0, p1, p2;
-  // var result = [];
-
-  // p0 = start;
-
-  // for (var i = 0; i < path.length - 1; i++) {
-  //   p1 = path[i].position;
-  //   p2 = path[i + 1].position;
-  //   const maxJunctionSpeed = toZero(
-  //     calcMaxJunctionSpeed(p1.sub(p0).unit(), p2.sub(p1).unit(), settings)
-  //   );
-  //   result.push({
-  //     position: p1,
-  //     finalSpeed: 0,
-  //     maxSpeed: path[i].desiredSpeed
-  //   });
-  //   p0 = p1;
-  // }
-
-  // result.push({
-  //   position: path[path.length - 1].position,
-  //   finalSpeed: 0,
-  //   maxSpeed: path[path.length - 1].desiredSpeed
-  // });
-
-  // return result;
-
-  // return path.map(({ position, desiredSpeed }) => ({
-  //   position,
-  //   finalSpeed: 0,
-  //   maxSpeed: desiredSpeed
-  // }));
 }
 
 function makeSpeedPoint(start, target, speed, acceleration) {
@@ -311,22 +261,13 @@ function planSegment(start, target, settings) {
       directionToTarget.scale(point3ToTargetDistance)
     );
 
-    if (!point2Position.x || !point3Position.x || !target.position.x) {
-      console.log("HDFOISD");
-    }
-
     point1 = makeSpeedPoint(
       start.position,
       point2Position,
       start.speed,
       accelerationToTarget
     );
-    point2 = makeSpeedPoint(
-      point2Position,
-      point3Position,
-      speedToTarget,
-      0
-    );
+    point2 = makeSpeedPoint(point2Position, point3Position, speedToTarget, 0);
     point3 = makeSpeedPoint(
       point3Position,
       target.position,
@@ -347,10 +288,6 @@ function planSegment(start, target, settings) {
     point2Position = start.position.add(
       directionToTarget.scale(startToPoint2Distance)
     );
-
-    if (!point2Position.x || !target.position.x) {
-      console.log(startToPoint2Distance, point2Speed, start.speed, accelerationToTarget);
-    }
 
     point1 = makeSpeedPoint(
       start.position,
