@@ -86,24 +86,6 @@ function calculateMaximumJunctionSpeeds(path, settings, start) {
   return result;
 }
 
-function calculateMaxAccelerationAndDisplacement(
-  startPosition,
-  targetPosition,
-  settings
-) {
-  const startToTargetVector = targetPosition.sub(startPosition);
-  const startToTargetDirection = startToTargetVector.unit();
-
-  const acceleration = maxForcePerDirection(
-    settings.accelerationX,
-    settings.accelerationY,
-    startToTargetDirection
-  );
-  const displacement = startToTargetVector.mag();
-
-  return [acceleration, displacement];
-}
-
 function calculateSpeedIncrease(startPosition, targetPosition, settings) {
   const startToTargetVector = targetPosition.sub(startPosition);
   const startToTargetDirection = startToTargetVector.unit();
@@ -125,21 +107,6 @@ function canReachTargetSpeed(
   targetSpeed,
   settings
 ) {
-  // const [acceleration, displacement] = calculateMaxAccelerationAndDisplacement(
-  //   startPosition,
-  //   targetPosition,
-  //   settings
-  // );
-
-  // const finalMaxSpeed = Math.sqrt(2 * acceleration * displacement);
-
-  // // return (
-  // //   Math.min(finalMaxSpeed, desiredStartSpeed) >=
-  // //   Math.abs(desiredStartSpeed - targetSpeed)
-  // // );
-
-  // return finalMaxSpeed > Math.abs(desiredStartSpeed - targetSpeed);
-
   const speedIncrease = calculateSpeedIncrease(
     startPosition,
     targetPosition,
@@ -150,8 +117,6 @@ function canReachTargetSpeed(
     speedIncrease,
     Math.abs(desiredStartSpeed - targetSpeed)
   );
-  // Math.min(speedIncrease, desiredStartSpeed) >=
-  // speedIncrease >= Math.abs(desiredStartSpeed - targetSpeed)
 }
 
 function calculateMaxSpeedToReachTargetSpeed(
@@ -160,14 +125,6 @@ function calculateMaxSpeedToReachTargetSpeed(
   targetSpeed,
   settings
 ) {
-  // const [acceleration, displacement] = calculateMaxAccelerationAndDisplacement(
-  //   startPosition,
-  //   targetPosition,
-  //   settings
-  // );
-
-  // return Math.sqrt(Math.pow(targetSpeed, 2) - 2 * -acceleration * displacement);
-
   const speedIncrease = calculateSpeedIncrease(
     startPosition,
     targetPosition,
@@ -251,7 +208,7 @@ function calculateJunctionSpeeds(path, settings, start) {
         settings
       );
 
-      console.log("OH SNAP...")
+      console.log("OH SNAP...");
 
       //TODO Recalc previous points speed
     }
@@ -327,20 +284,32 @@ function planSegment(start, target, settings) {
       directionToTarget.scale(startToPoint2Distance)
     );
 
-    point1 = speedPoint(
-      start.position,
-      point2Position,
-      start.speed,
-      accelerationToTarget
-    );
-    point2 = speedPoint(
-      point2Position,
-      target.position,
-      point2Speed,
-      -accelerationToTarget
-    );
-
-    return [point1, point2];
+    if (
+      startToPoint2Distance > startToTarget.mag() ||
+      startToPoint2Distance < 0
+    ) {
+      point1 = speedPoint(
+        start.position,
+        target.position,
+        start.speed,
+        start.speed > target.finalSpeed ? -1 : 1 * accelerationToTarget
+      );
+      return [point1];
+    } else {
+      point1 = speedPoint(
+        start.position,
+        point2Position,
+        start.speed,
+        accelerationToTarget
+      );
+      point2 = speedPoint(
+        point2Position,
+        target.position,
+        point2Speed,
+        -accelerationToTarget
+      );
+      return [point1, point2];
+    }
   }
 }
 
