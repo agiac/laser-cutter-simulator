@@ -5,6 +5,18 @@ function toZero(n, precision = 0.000001) {
   return n;
 }
 
+function approxEqual(a, b, precision = 0.000001) {
+  return Math.abs(a - b) <= precision;
+}
+
+function approxGreater(a, b, precision = 0.000001) {
+  return a - b > precision;
+}
+
+function approxGreateOrEqual(a, b, precision = 0.000001) {
+  return approxGreater(a, b) || approxEqual(a, b);
+}
+
 function maxForcePerDirection(maxForceX, maxForceY, unitVector) {
   return Math.min(
     Math.abs(maxForceX / unitVector.x) || 1000000000,
@@ -92,25 +104,54 @@ function calculateMaxAccelerationAndDisplacement(
   return [acceleration, displacement];
 }
 
+function calculateSpeedIncrease(startPosition, targetPosition, settings) {
+  const startToTargetVector = targetPosition.sub(startPosition);
+  const startToTargetDirection = startToTargetVector.unit();
+
+  const acceleration = maxForcePerDirection(
+    settings.accelerationX,
+    settings.accelerationY,
+    startToTargetDirection
+  );
+  const displacement = startToTargetVector.mag();
+
+  return Math.sqrt(2 * acceleration * displacement);
+}
+
 function canReachTargetSpeed(
   startPosition,
-  desiredSpeed,
+  desiredStartSpeed,
   targetPosition,
   targetSpeed,
   settings
 ) {
-  const [acceleration, displacement] = calculateMaxAccelerationAndDisplacement(
+  // const [acceleration, displacement] = calculateMaxAccelerationAndDisplacement(
+  //   startPosition,
+  //   targetPosition,
+  //   settings
+  // );
+
+  // const finalMaxSpeed = Math.sqrt(2 * acceleration * displacement);
+
+  // // return (
+  // //   Math.min(finalMaxSpeed, desiredStartSpeed) >=
+  // //   Math.abs(desiredStartSpeed - targetSpeed)
+  // // );
+
+  // return finalMaxSpeed > Math.abs(desiredStartSpeed - targetSpeed);
+
+  const speedIncrease = calculateSpeedIncrease(
     startPosition,
     targetPosition,
     settings
   );
 
-  const finalMaxSpeed = Math.sqrt(2 * acceleration * displacement);
-
-  return (
-    Math.min(finalMaxSpeed, desiredSpeed) >=
-    Math.abs(desiredSpeed - targetSpeed)
+  return approxGreateOrEqual(
+    speedIncrease,
+    Math.abs(desiredStartSpeed - targetSpeed)
   );
+  // Math.min(speedIncrease, desiredStartSpeed) >=
+  // speedIncrease >= Math.abs(desiredStartSpeed - targetSpeed)
 }
 
 function calculateMaxSpeedToReachTargetSpeed(
@@ -119,13 +160,21 @@ function calculateMaxSpeedToReachTargetSpeed(
   targetSpeed,
   settings
 ) {
-  const [acceleration, displacement] = calculateMaxAccelerationAndDisplacement(
+  // const [acceleration, displacement] = calculateMaxAccelerationAndDisplacement(
+  //   startPosition,
+  //   targetPosition,
+  //   settings
+  // );
+
+  // return Math.sqrt(Math.pow(targetSpeed, 2) - 2 * -acceleration * displacement);
+
+  const speedIncrease = calculateSpeedIncrease(
     startPosition,
     targetPosition,
     settings
   );
 
-  return Math.sqrt(Math.pow(targetSpeed, 2) - 2 * -acceleration * displacement);
+  return targetSpeed + speedIncrease;
 }
 
 function junctionSpeedPoint(position, finalSpeed, maxSpeed) {
@@ -177,30 +226,34 @@ function calculateJunctionSpeeds(path, settings, start) {
       )
     ) {
       junctionSpeeds.push(
+        junctionSpeedPoint(current.position, desiredFinalSpeed, maxSpeed)
+      );
+    } else if (desiredFinalSpeed >= next.finalSpeed) {
+      const maxSpeedToReachTargetSpeed = calculateMaxSpeedToReachTargetSpeed(
+        current.position,
+        next.position,
+        next.finalSpeed,
+        settings
+      );
+
+      junctionSpeeds.push(
         junctionSpeedPoint(
           current.position,
-          desiredFinalSpeed,
+          maxSpeedToReachTargetSpeed,
           maxSpeed
         )
       );
     } else {
-      if (desiredFinalSpeed > next.finalSpeed) {
-        const maxSpeedToReachTargetSpeed = calculateMaxSpeedToReachTargetSpeed(
-          current.position,
-          next.position,
-          next.finalSpeed,
-          settings
-        );
-        junctionSpeeds.push(
-          junctionSpeedPoint(
-            current.position,
-            maxSpeedToReachTargetSpeed,
-            maxSpeed
-          )
-        );
-      } else {
-        console.log("what to do now???");
-      }
+      const maxSpeedForTarget = calculateMaxSpeedToReachTargetSpeed(
+        current.position,
+        next.position,
+        desiredFinalSpeed,
+        settings
+      );
+
+      console.log("OH SNAP...")
+
+      //TODO Recalc previous points speed
     }
   }
 
