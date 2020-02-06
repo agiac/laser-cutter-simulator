@@ -128,11 +128,11 @@ function calculateMaxSpeedToReachTargetSpeed(
   return Math.sqrt(Math.pow(targetSpeed, 2) - 2 * -acceleration * displacement);
 }
 
-function junctionSpeedPoint(position, finalSpeed, desiredSpeed) {
+function junctionSpeedPoint(position, finalSpeed, maxSpeed) {
   return {
     position,
     finalSpeed,
-    desiredSpeed
+    maxSpeed
   };
 }
 
@@ -157,7 +157,7 @@ function calculateJunctionSpeeds(path, settings, start) {
     const next = junctionSpeeds[junctionSpeeds.length - 1];
     const current = maxJunctionSpeeds[i];
 
-    const desiredSpeed = Math.min(
+    const maxSpeed = Math.min(
       path[i].desiredSpeed,
       maxForcePerDirection(
         settings.maximumSpeedX,
@@ -165,12 +165,10 @@ function calculateJunctionSpeeds(path, settings, start) {
         next.position.sub(current.position).unit()
       )
     );
-    const desiredFinalSpeed = Math.min(current.maxJunctionSpeed, desiredSpeed);
+    const desiredFinalSpeed = Math.min(current.maxJunctionSpeed, maxSpeed);
 
-    //Check if the current point max junction speed allows the reach of the next point speed
     if (
       canReachTargetSpeed(
-        //TODO maybe we can only use calculateMaxSpeedToReachTargetSpeed and check with that?
         current.position,
         desiredFinalSpeed,
         next.position,
@@ -182,7 +180,7 @@ function calculateJunctionSpeeds(path, settings, start) {
         junctionSpeedPoint(
           current.position,
           desiredFinalSpeed,
-          desiredSpeed //TODO Maybe this is already the final maxSpeed ????
+          maxSpeed
         )
       );
     } else {
@@ -197,7 +195,7 @@ function calculateJunctionSpeeds(path, settings, start) {
           junctionSpeedPoint(
             current.position,
             maxSpeedToReachTargetSpeed,
-            desiredSpeed
+            maxSpeed
           )
         );
       } else {
@@ -219,26 +217,16 @@ function speedPoint(start, target, speed, acceleration) {
 }
 
 function planSegment(start, target, settings) {
-  const {
-    maximumSpeedX,
-    maximumSpeedY,
-    accelerationX,
-    accelerationY
-  } = settings;
-
   const startToTarget = target.position.sub(start.position);
   const directionToTarget = startToTarget.unit();
 
   const accelerationToTarget = maxForcePerDirection(
-    accelerationX,
-    accelerationY,
+    settings.accelerationX,
+    settings.accelerationY,
     directionToTarget
   );
 
-  const speedToTarget = Math.min(
-    maxForcePerDirection(maximumSpeedX, maximumSpeedY, directionToTarget),
-    target.desiredSpeed
-  );
+  const speedToTarget = target.maxSpeed;
 
   var startToPoint2Distance =
     (Math.pow(speedToTarget, 2) - Math.pow(start.speed, 2)) /
