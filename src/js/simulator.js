@@ -8,14 +8,16 @@ function maxForcePerDirection(maxForceX, maxForceY, unitVector) {
 }
 
 /**
- *
  * From https://github.com/gnea/grbl/blob/master/grbl/planner.c#L407
- * @param {Vector} uV1 Unit vector
- * @param {Vector} uV2 Unit vector
- * @returns {Number}
+ * @param {Vector} v1
+ * @param {Vector} v2
+ * @returns {number}
  */
-function calcMaxJunctionSpeed(uV1, uV2, settings) {
-  const {minimumJunctionSpeed, junctionDeviation} = settings;
+function calculateMaxJunctionSpeed(v1, v2, settings) {
+  const { minimumJunctionSpeed, junctionDeviation } = settings;
+
+  const uV1 = v1.unit();
+  const uV2 = v2.unit();
 
   const junction_cos_theta = -uV1.x * uV2.x - uV1.y * uV2.y;
   const junction_unit_vec = uV2.sub(uV1).unit();
@@ -55,7 +57,7 @@ function calculateMaximumJunctionSpeeds(path, settings, start) {
     p1 = path[i].position;
     p2 = path[i + 1].position;
     const maxJunctionSpeed = toZero(
-      calcMaxJunctionSpeed(p1.sub(p0).unit(), p2.sub(p1).unit(), settings)
+      calculateMaxJunctionSpeed(p1.sub(p0), p2.sub(p1), settings)
     );
     result.push({
       position: p1,
@@ -71,32 +73,53 @@ function calculateMaximumJunctionSpeeds(path, settings, start) {
 
   return result;
 }
-/**
- *
- * @param {Vector} startPosition
- * @param {Number} startSpeed
- * @param {Vector} targetPosition
- * @param {Number} targetSpeed
- */
+
+function calculateAccelerationMaxSpeedAndDisplacement(
+  startPosition,
+  targetPosition,
+  desiredSpeed,
+  settings
+) {
+  const startToTargetVector = targetPosition.sub(startPosition);
+  const startToTargetDirection = startToTargetVector.unit();
+
+  const acceleration = maxForcePerDirection(
+    settings.accelerationX,
+    settings.accelerationY,
+    startToTargetDirection
+  );
+  const maxSpeed = Math.min(
+    maxForcePerDirection(
+      settings.maximumSpeedX,
+      settings.maximumSpeedY,
+      startToTargetDirection
+    ),
+    desiredSpeed
+  );
+  const displacement = startToTargetVector.mag();
+
+  return [acceleration, maxSpeed, displacement];
+}
+
 function canReachTargetSpeed(
   startPosition,
   startSpeed,
   targetPosition,
   targetSpeed,
+  desiredSpeed,
   settings
 ) {
-  const startToTargetVector = targetPosition.sub(startPosition);
-  const acceleration = maxForcePerDirection(
-    settings.accelerationX,
-    settings.accelerationY,
-    startToTargetVector.unit()
+  const [
+    acceleration,
+    maxSpeed,
+    displacement
+  ] = calculateAccelerationMaxSpeedAndDisplacement(
+    startPosition,
+    targetPosition,
+    desiredSpeed,
+    settings
   );
-  const maxSpeed = maxForcePerDirection(
-    settings.maximumSpeedX,
-    settings.maximumSpeedY,
-    startToTargetVector.unit()
-  );
-  const displacement = startToTargetVector.mag();
+
   const finalMaxSpeed = Math.sqrt(2 * acceleration * displacement);
 
   return (
@@ -105,25 +128,25 @@ function canReachTargetSpeed(
   );
 }
 
-function calcMaxSpeedToReachTargetSpeed(
+function calculateMaxSpeedToReachTargetSpeed(
   startPosition,
   targetPosition,
   targetSpeed,
+  desiredSpeed,
   settings,
   decelerate
 ) {
-  const startToTargetVector = targetPosition.sub(startPosition);
-  const acceleration = maxForcePerDirection(
-    settings.accelerationX,
-    settings.accelerationY,
-    startToTargetVector.unit()
+  const [
+    acceleration,
+    maxSpeed,
+    displacement
+  ] = calculateAccelerationMaxSpeedAndDisplacement(
+    startPosition,
+    targetPosition,
+    desiredSpeed,
+    settings
   );
-  const maxSpeed = maxForcePerDirection(
-    settings.maximumSpeedX,
-    settings.maximumSpeedY,
-    startToTargetVector.unit()
-  );
-  const displacement = startToTargetVector.mag();
+
   const result = Math.sqrt(
     Math.pow(Math.min(targetSpeed, maxSpeed), 2) -
       2 * (decelerate ? -1 : 1) * acceleration * displacement
@@ -131,22 +154,25 @@ function calcMaxSpeedToReachTargetSpeed(
   return result;
 }
 
-function calculateTargetSpeeds(path, settings, start) {
+function junctionSpeedPoint(position, finalSpeed, desiredSpeed) {
+  return {
+    position,
+    finalSpeed,
+    desiredSpeed
+  };
+}
+
+function calculateJunctionSpeeds(path, settings, start) {
   const maxJunctionSpeeds = calculateMaximumJunctionSpeeds(
     path,
     settings,
     start
   );
 
-  const resultPoint = (position, finalSpeed, maxSpeed) => ({
-    position,
-    finalSpeed,
-    maxSpeed
-  });
+  const junctionSpeeds = [];
 
-  const result = [];
-  result.push(
-    resultPoint(
+  junctionSpeeds.push(
+    junctionSpeedPoint(
       maxJunctionSpeeds[maxJunctionSpeeds.length - 1].position,
       maxJunctionSpeeds[maxJunctionSpeeds.length - 1].maxJunctionSpeed,
       path[path.length - 1].desiredSpeed
@@ -154,51 +180,62 @@ function calculateTargetSpeeds(path, settings, start) {
   );
 
   for (var i = maxJunctionSpeeds.length - 2; i >= 0; i--) {
-    const next = result[result.length-1];
-
+    const next = junctionSpeeds[junctionSpeeds.length - 1];
     const current = maxJunctionSpeeds[i];
 
-    //Check if the current point max junction speed allows the reach of the previous point speed
+    const desiredSpeed = path[i].desiredSpeed;
+    const maxSpeedPerDirection = maxForcePerDirection(
+      settings.maximumSpeedX,
+      settings.maximumSpeedY,
+      next.position.sub(current.position).unit()
+    );
+
+    //Check if the current point max junction speed allows the reach of the next point speed
     if (
       canReachTargetSpeed(
         current.position,
         current.maxJunctionSpeed,
         next.position,
         next.finalSpeed,
+        desiredSpeed,
         settings
       )
     ) {
-      result.push(
-        resultPoint(
+      junctionSpeeds.push(
+        junctionSpeedPoint(
           current.position,
           Math.min(
             current.maxJunctionSpeed,
-            path[i].desiredSpeed,
-            maxForcePerDirection(
-              settings.maximumSpeedX,
-              settings.maximumSpeedY,
-              next.position.sub(current.position).unit()
-            )
+            desiredSpeed,
+            maxSpeedPerDirection
           ),
-          path[i].desiredSpeed
+          desiredSpeed //TODO Maybe we could put here already the final maxSpeed as min(desiredSpeed, maxSpeedPerDirection) ?!?!?!?!
         )
       );
     } else {
-      const maxSpeedToReachTargetSpeed = calcMaxSpeedToReachTargetSpeed(
+      const maxSpeedToReachTargetSpeed = calculateMaxSpeedToReachTargetSpeed(
         current.position,
         next.position,
         next.finalSpeed,
+        desiredSpeed,
         settings,
         current.maxJunctionSpeed > next.finalSpeed
       );
 
-      if (maxSpeedToReachTargetSpeed >= 0) {
-
-        result.push(
-          resultPoint(
+      if (
+        maxSpeedToReachTargetSpeed >= 0 &&
+        !isNaN(maxSpeedToReachTargetSpeed)
+      ) {
+        //WHAT IF maxSpeedToReachTargetSpeed IS HIGHER THAN MAXFORCEPERDIRECTION ???
+        junctionSpeeds.push(
+          junctionSpeedPoint(
             current.position,
-            maxSpeedToReachTargetSpeed,
-            path[i].desiredSpeed
+            Math.min(
+              maxSpeedToReachTargetSpeed,
+              desiredSpeed,
+              maxSpeedPerDirection
+            ),
+            desiredSpeed
           )
         );
       } else {
@@ -207,7 +244,7 @@ function calculateTargetSpeeds(path, settings, start) {
     }
   }
 
-  return result.reverse();
+  return junctionSpeeds.reverse();
 }
 
 function makeSpeedPoint(start, target, speed, acceleration) {
@@ -235,9 +272,10 @@ function planSegment(start, target, settings) {
     accelerationY,
     directionToTarget
   );
+
   const speedToTarget = Math.min(
     maxForcePerDirection(maximumSpeedX, maximumSpeedY, directionToTarget),
-    target.maxSpeed
+    target.desiredSpeed
   );
 
   var startToPoint2Distance =
@@ -309,14 +347,14 @@ function toZero(n, precision = 0.000001) {
 }
 
 export function plan(path, settings, startPosition) {
-  const targetSpeeds = calculateTargetSpeeds(path, settings, startPosition);
+  const junctionSpeeds = calculateJunctionSpeeds(path, settings, startPosition);
 
   var result = [];
   var start = { position: startPosition, speed: 0 };
 
-  targetSpeeds.forEach(target => {
-    result.push(...planSegment(start, target, settings));
-    start = { position: target.position, speed: target.finalSpeed };
+  junctionSpeeds.forEach(junction => {
+    result.push(...planSegment(start, junction, settings));
+    start = { position: junction.position, speed: junction.finalSpeed };
   });
 
   return result;
