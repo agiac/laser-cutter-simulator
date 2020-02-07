@@ -154,11 +154,11 @@ const memoizeGivePrediction = (settingsList, inputName) => {
         svgElement.style.display = "none";
 
         const allX = svgPaths.reduce(
-          (res, path) => [...res, ...path.map(p => p.x)],
+          (res, path) => [...res, ...path.map(p => p.x - 10)],
           []
         );
         const allY = svgPaths.reduce(
-          (res, path) => [...res, ...path.map(p => p.y)],
+          (res, path) => [...res, ...path.map(p => p.y - 10 )],
           []
         );
         const minX = Math.min(...allX);

@@ -1,75 +1,78 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link href="style.css" rel="stylesheet" />
-  </head>
-  <body>
-    <div class="title">
-      <h1>Laser jobs time predictor</h1>
-    </div>
-    <div class="settings">
-      <div class="settings-section">
-        <h3>Machine settings:</h3>
-        <label>
-          Maximum speed X:
-          <input name="maximumSpeedX" type="number" min="1" value="500" />
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="style.css" rel="stylesheet" />
+</head>
+
+<body>
+  <div class="title">
+    <h1>Laser jobs time predictor</h1>
+  </div>
+  <div class="settings">
+    <div class="settings-section">
+      <h3>Machine settings:</h3>
+      <label title="mm/s">
+        Maximum speed X:
+        <input name="maximumSpeedX" type="number" min="1" value="500" />
+      </label>
+      <label title="mm/s">
+        Maximum speed Y:
+        <input name="maximumSpeedY" type="number" min="1" value="500" />
+      </label>
+      <label title="mm/s^2">
+        Acceleration X:
+        <input name="accelerationX" type="number" min="1" value="3000" />
+      </label>
+      <label title="mm/s^2">
+        Acceleration Y:
+        <input name="accelerationY" type="number" min="1" value="3000" />
+      </label>
+      <h5>Advanced</h5>
+      <div class="advanced">
+        <label title="mm/s">
+          Minimum junction speed:
+          <input name="minimumJunctionSpeed" type="number" min="0" value="0" step="0.1" />
         </label>
-        <label>
-          Maximum speed Y:
-          <input name="maximumSpeedY" type="number" min="1" value="500" />
+        <label title="mm">
+          Junction deviation:
+          <input name="junctionDeviation" type="number" min="0" value="0.01" step="0.01" />
         </label>
-        <label>
-          Acceleration X:
-          <input name="accelerationX" type="number" min="1" value="3000" />
-        </label>
-        <label>
-          Acceleration Y:
-          <input name="accelerationY" type="number" min="1" value="3000" />
-        </label>
-        <h5>Advanced</h5>
-        <div class="advanced">
-          <label>
-            Minimum junction speed:
-            <input name="minimumJunctionSpeed" type="number" min="0" value="0" step="0.1"/>
-          </label>
-          <label>
-            Junction deviation:
-            <input name="junctionDeviation" type="number" min="0" value="0.01" step="0.01"/>
-          </label>
-        </div>
-      </div class="settings-section">
-      <div class="settings-section">
-        <h3>G-code settings:</h3>
-        <label>
-          Cutting speed:
-          <input name="cuttingSpeed" type="number" min="1" value="100" />
-        </label>
-        <label>
-          Travel speed:
-          <input name="travelSpeed" type="number" min="1" value="400" />
-        </label>
-        <!-- <label>
+      </div>
+    </div class="settings-section">
+    <div class="settings-section">
+      <h3>G-code settings:</h3>
+      <label title="mm/s">
+        Cutting speed:
+        <input name="cuttingSpeed" type="number" min="1" value="100" />
+      </label>
+      <label title="mm/s">
+        Travel speed:
+        <input name="travelSpeed" type="number" min="1" value="400" />
+      </label>
+      <!-- <label>
           Engraving speed:
           <input name="engravingSpeed" type="number" min="1" value="80" />
         </label> -->
-      </div>
-      <div class="settings-section">
-        <h3>File:</h3>
-        <input type="file" id="file-upload" name="file-upload" accept=".svg" />
-      </div>
     </div>
-    <div class="time-estimation-section">
-      <h2>Estimated time:</h2>
-      <h2 id="time-estimation">--- min.</h2>
+    <div class="settings-section">
+      <h3>File:</h3>
+      <input type="file" id="file-upload" name="file-upload" accept=".svg" />
     </div>
-    <canvas id="canvas"></canvas>
-    <script>
-      const canvas = document.getElementById("canvas");
-      canvas.width = canvas.clientWidth;
-      canvas.height = canvas.clientHeight;
-    </script>
-  </body>
-  <script src="js/index.js"></script>
+  </div>
+  <div class="time-estimation-section">
+    <h2>Estimated time:</h2>
+    <h2 id="time-estimation">--- min.</h2>
+  </div>
+  <canvas id="canvas"></canvas>
+  <script>
+    const canvas = document.getElementById("canvas");
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+  </script>
+</body>
+<script src="js/index.js"></script>
+
 </html>
