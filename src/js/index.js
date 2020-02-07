@@ -49,15 +49,11 @@ const setDisplay = () => {
     mTimePath = null,
     mCanvas = null
   ) => {
-    if (mStartPosition) {
-      console.log("here");
-      startPosition = mStartPosition;
-    }
+    if (mStartPosition) startPosition = mStartPosition;
     if (mPath) path = mPath;
     if (mTimePath) timePath = mTimePath;
     if (mCanvas) canvas = mCanvas;
 
-    console.log(startPosition);
     if (startPosition && path && canvas) {
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -131,6 +127,9 @@ const memoizeGivePrediction = (settingsList, inputName) => {
       if (!file) {
         return;
       }
+
+      const timeEstimationElement = document.getElementById("time-estimation");
+      timeEstimationElement.innerText = `calculating...`;
 
       const svgElement = document.createElement("object");
       svgElement.type = "image/svg+xml";

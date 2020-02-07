@@ -199,13 +199,15 @@ function calculateJunctionSpeeds(path, settings, start) {
         )
       );
     } else {
-      alert(
-        "Oh no, looks like you hit the only unhandled scenario! Take a screenshot and let Alberto know."
-      );
-
-      break;
-
       //TODO Recalc previous points speed
+
+      junctionSpeeds.push( // ===> This is wrong!
+        junctionSpeedPoint(
+          current.position,
+          desiredFinalSpeed,
+          maxSpeed
+        )
+      );
     }
   }
 
