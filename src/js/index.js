@@ -1,57 +1,109 @@
 import { default as V } from "./vector.js";
 import * as Simulator from "./simulator";
+import { reject } from "q";
+
+function getSVGGeometryElements(children) {
+  const result = [];
+
+  const recurseChildren = children => {
+    for (const child of children) {
+      if (child.children.length === 0) {
+        if (
+          typeof child.getTotalLength === "function" &&
+          typeof child.getPointAtLength === "function"
+        ) {
+          result.push(child);
+        }
+      } else {
+        recurseChildren(child.children);
+      }
+    }
+  };
+
+  recurseChildren(children);
+
+  return result;
+}
 
 function givePrediction() {
-  const fileData = loadFile();
+  const file = loadFile();
 
-  //   if (fileData) {
-  const settingsData = loadSettings();
-  const startPosition = V.new(0, 0);
+  if (file) {
+    file.text().then(text => {
+      const parser = new DOMParser();
+      const svg = parser.parseFromString(text, "image/svg+xml");
+      const svgGeometryElements = getSVGGeometryElements(svg.children);
 
-  // const path = [
-  //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed },
-  //   { position: V.new(200, 0), desiredSpeed: settingsData.cuttingSpeed },
-  //   { position: V.new(0, 0), desiredSpeed: settingsData.cuttingSpeed },
-  //   { position: V.new(0, 200), desiredSpeed: settingsData.cuttingSpeed },
-  //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed }
-  // ];
+      // const svgPoints = svgGeometryElements.map(element => {
+      //   const elementPoints = [];
+      //   console.log(element)
+      //   const totLength = element.getTotalLength();
+      //   for (var l = 0; l < totLength; l += 1) {
+      //     elementPoints.push({
+      //       x: element.getPointAtLength(l).x,
+      //       y: element.getPointAtLength(l).y
+      //     });
+      //   }
+      //   return elementPoints;
+      // });
 
-  // const path = [
-  //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed },
-  //   { position: V.new(200, 100), desiredSpeed: settingsData.cuttingSpeed },
-  //   { position: V.new(200, 0), desiredSpeed: settingsData.cuttingSpeed },
-  //   { position: V.new(0, 0), desiredSpeed: settingsData.cuttingSpeed },
-  //   { position: V.new(100, 100), desiredSpeed: settingsData.cuttingSpeed },
-  //   { position: V.new(0, 200), desiredSpeed: settingsData.cuttingSpeed },
-  //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed }
-  // ];
+      // console.log(svgPoints);
 
-  const cX = 100;
-  const cY = 100;
-  const radius = 100;
-  const sides = 40;
-  const path = [];
+      const circle = document.createElement('cirle')
+      circle.cx = 100;
+      circle.cy = 100;
+      circle.r = 50;
 
-  for (var a = 0; a <= 2 * Math.PI; a += (2 * Math.PI) / sides) {
-    const x = cX + Math.cos(a) * radius;
-    const y = cY + Math.sin(a) * radius;
-    path.push({
-      position: V.new(x, y),
-      desiredSpeed: settingsData.cuttingSpeed
+      console.log(circle)
+
+      const settingsData = loadSettings();
+      const startPosition = V.new(0, 0);
+
+      // const path = [
+      //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed },
+      //   { position: V.new(200, 0), desiredSpeed: settingsData.cuttingSpeed },
+      //   { position: V.new(0, 0), desiredSpeed: settingsData.cuttingSpeed },
+      //   { position: V.new(0, 200), desiredSpeed: settingsData.cuttingSpeed },
+      //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed }
+      // ];
+
+      // const path = [
+      //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed },
+      //   { position: V.new(200, 100), desiredSpeed: settingsData.cuttingSpeed },
+      //   { position: V.new(200, 0), desiredSpeed: settingsData.cuttingSpeed },
+      //   { position: V.new(0, 0), desiredSpeed: settingsData.cuttingSpeed },
+      //   { position: V.new(100, 100), desiredSpeed: settingsData.cuttingSpeed },
+      //   { position: V.new(0, 200), desiredSpeed: settingsData.cuttingSpeed },
+      //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed }
+      // ];
+
+      const cX = 100;
+      const cY = 100;
+      const radius = 100;
+      const sides = 40;
+      const path = [];
+
+      for (var a = 0; a <= 2 * Math.PI; a += (2 * Math.PI) / sides) {
+        const x = cX + Math.cos(a) * radius;
+        const y = cY + Math.sin(a) * radius;
+        path.push({
+          position: V.new(x, y),
+          desiredSpeed: settingsData.cuttingSpeed
+        });
+      }
+
+      const timePath = Simulator.plan(path, settingsData, startPosition);
+      const canvas = document.getElementById("canvas");
+      animatePath(path, timePath, canvas);
+
+      const timeEstimation = Simulator.estimateTime(timePath);
+
+      const timeEstimationElement = document.getElementById("time-estimation");
+      timeEstimationElement.innerText = `${parseInt(
+        timeEstimation / 60
+      )} min. ${parseInt(timeEstimation % 60)} sec.`;
     });
   }
-
-  const timePath = Simulator.plan(path, settingsData, startPosition);
-  const canvas = document.getElementById("canvas");
-  animatePath(path, timePath, canvas);
-
-  const timeEstimation = Simulator.estimateTime(timePath);
-
-  const timeEstimationElement = document.getElementById("time-estimation");
-  timeEstimationElement.innerText = `${parseInt(
-    timeEstimation / 60
-  )} min. ${parseInt(timeEstimation % 60)} sec.`;
-  //   }
 }
 
 function loadSettings() {
@@ -65,13 +117,23 @@ function loadSettings() {
 }
 
 function loadFile() {
-  const upload = document.getElementsByName("file-upload")[0].files[0];
+  return document.getElementsByName("file-upload")[0].files[0];
 
-  if (upload) {
-    return window.URL.createObjectURL(upload);
-  }
+  // return new Promise((resolve, reject) => {
+  //   const upload = document.getElementsByName("file-upload")[0].files[0];
 
-  return null;
+  //   if (upload) {
+  //     resolve(upload.text());
+  //   } else {
+  //     reject("No file uploaded");
+  //   }
+  // });
+
+  // if (upload) {
+  //   return window.URL.createObjectURL(upload);
+  // }
+
+  // return null;
 }
 
 function drawFrame(canvas, path, timePath, laserPosition) {
@@ -140,7 +202,7 @@ const settings = Object.freeze([
   "accelerationY",
   "minimumJunctionSpeed",
   "junctionDeviation",
-  "cuttingSpeed",
+  "cuttingSpeed"
   // "engravingSpeed",
 ]);
 
