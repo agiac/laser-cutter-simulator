@@ -1,6 +1,6 @@
 import { default as V } from "./vector.js";
 import * as Simulator from "./simulator";
-import { reject } from "q";
+import simplify from "simplify-js"
 
 function getSVGGeometryElements(children) {
   const result = [];
@@ -29,35 +29,58 @@ function givePrediction() {
   const file = loadFile();
 
   if (file) {
-    file.text().then(text => {
-      const parser = new DOMParser();
-      const svg = parser.parseFromString(text, "image/svg+xml");
+    const settingsData = loadSettings();
+    const startPosition = V.new(0, 0);
+
+    const svgElement = document.createElement("object");
+    svgElement.type = "image/svg+xml";
+    svgElement.data = window.URL.createObjectURL(file);
+
+    svgElement.onload = () => {
+      const svg = svgElement.contentDocument;
       const svgGeometryElements = getSVGGeometryElements(svg.children);
 
-      // const svgPoints = svgGeometryElements.map(element => {
-      //   const elementPoints = [];
-      //   console.log(element)
-      //   const totLength = element.getTotalLength();
-      //   for (var l = 0; l < totLength; l += 1) {
-      //     elementPoints.push({
-      //       x: element.getPointAtLength(l).x,
-      //       y: element.getPointAtLength(l).y
-      //     });
-      //   }
-      //   return elementPoints;
-      // });
+      const svgPaths = svgGeometryElements.map(element => {
+        const elementPoints = [];
+        const totLength = element.getTotalLength();
+        for (var l = 0; l < totLength; l += 1) {
+          elementPoints.push({
+            x: element.getPointAtLength(l).x,
+            y: element.getPointAtLength(l).y
+          });
+        }
+        return simplify(elementPoints, 0.5);
+      });
 
-      // console.log(svgPoints);
+      svgElement.style.display = 'none';
 
-      const circle = document.createElement('cirle')
-      circle.cx = 100;
-      circle.cy = 100;
-      circle.r = 50;
+      const path = svgPaths.reduce((result, path) => {
+        return [
+          ...result,
+          ...path.map(({ x, y }, index) => {
+            if (index === 0) {
+              return {
+                position: V.new(x, y),
+                desiredSpeed: 100
+              };
+            } else {
+              return {
+                position: V.new(x, y),
+                desiredSpeed: settingsData.cuttingSpeed
+              };
+            }
+          })
+        ];
+      }, []);
 
-      console.log(circle)
+      const allX = path.map(p => p.position.x);
+      const allY = path.map(p => p.position.y);
+      const maxX = Math.max(...allX);
+      const maxY = Math.max(...allY);
+      const minX = Math.min(...allX);
+      const minY = Math.min(...allY);
 
-      const settingsData = loadSettings();
-      const startPosition = V.new(0, 0);
+      console.log( maxX - minX, maxY - minY);
 
       // const path = [
       //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed },
@@ -77,20 +100,20 @@ function givePrediction() {
       //   { position: V.new(200, 200), desiredSpeed: settingsData.cuttingSpeed }
       // ];
 
-      const cX = 100;
-      const cY = 100;
-      const radius = 100;
-      const sides = 40;
-      const path = [];
+      // const cX = 100;
+      // const cY = 100;
+      // const radius = 100;
+      // const sides = 40;
+      // const path = [];
 
-      for (var a = 0; a <= 2 * Math.PI; a += (2 * Math.PI) / sides) {
-        const x = cX + Math.cos(a) * radius;
-        const y = cY + Math.sin(a) * radius;
-        path.push({
-          position: V.new(x, y),
-          desiredSpeed: settingsData.cuttingSpeed
-        });
-      }
+      // for (var a = 0; a <= 2 * Math.PI; a += (2 * Math.PI) / sides) {
+      //   const x = cX + Math.cos(a) * radius;
+      //   const y = cY + Math.sin(a) * radius;
+      //   path.push({
+      //     position: V.new(x, y),
+      //     desiredSpeed: settingsData.cuttingSpeed
+      //   });
+      // }
 
       const timePath = Simulator.plan(path, settingsData, startPosition);
       const canvas = document.getElementById("canvas");
@@ -102,6 +125,29 @@ function givePrediction() {
       timeEstimationElement.innerText = `${parseInt(
         timeEstimation / 60
       )} min. ${parseInt(timeEstimation % 60)} sec.`;
+    };
+
+    document.querySelector("canvas").after(svgElement);
+  }
+
+  if (file) {
+    file.text().then(text => {
+      // const parser = new DOMParser();
+      // const svg = parser.parseFromString(text, "image/svg+xml");
+      // const svgGeometryElements = getSVGGeometryElements(svg.children);
+      // const svgPoints = svgGeometryElements.map(element => {
+      //   const elementPoints = [];
+      //   console.log(element)
+      //   const totLength = element.getTotalLength();
+      //   for (var l = 0; l < totLength; l += 1) {
+      //     elementPoints.push({
+      //       x: element.getPointAtLength(l).x,
+      //       y: element.getPointAtLength(l).y
+      //     });
+      //   }
+      //   return elementPoints;
+      // });
+      // console.log(svgPoints);
     });
   }
 }
@@ -149,7 +195,7 @@ function drawFrame(canvas, path, timePath, laserPosition) {
     ctx.fillStyle = "red";
     ctx.fill();
   });
-  ctx.beginPath();
+  // ctx.beginPath();
   // ctx.ellipse(laserPosition.x, laserPosition.y, 10, 10, 0, 0, 2 * Math.PI);
   // ctx.strokeStyle = "black";
   // ctx.stroke();

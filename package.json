@@ -4,7 +4,9 @@
     "build": "parcel build src/index.html --out-dir public --no-source-maps",
     "deploy": "npm run build  && now ./public --prod"
   },
-  "dependencies": {},
+  "dependencies": {
+    "simplify-js": "^1.2.4"
+  },
   "devDependencies": {
     "cssnano": "^4.1.10",
     "parcel-bundler": "1.12.4"
