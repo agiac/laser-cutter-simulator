@@ -84,7 +84,7 @@ function calculateMaximumJunctionSpeeds(path, settings, start) {
   return result;
 }
 
-function calculateSpeedIncrease(startPosition, targetPosition, settings) {
+function calculateSpeedIncrease(startPosition, startSpeed, targetPosition, settings) {
   const startToTargetVector = targetPosition.sub(startPosition);
   const startToTargetDirection = startToTargetVector.unit();
 
@@ -95,7 +95,11 @@ function calculateSpeedIncrease(startPosition, targetPosition, settings) {
   );
   const displacement = startToTargetVector.mag();
 
-  return Math.sqrt(2 * acceleration * displacement);
+  return Math.abs(
+    Math.sqrt(
+      Math.pow(startSpeed, 2) + 2 * acceleration * displacement
+    ) - startSpeed
+  );
 }
 
 function canReachTargetSpeed(
@@ -107,6 +111,7 @@ function canReachTargetSpeed(
 ) {
   const speedIncrease = calculateSpeedIncrease(
     startPosition,
+    desiredStartSpeed,
     targetPosition,
     settings
   );
@@ -124,8 +129,9 @@ function calculateMaxSpeedToReachTargetSpeed(
   settings
 ) {
   const speedIncrease = calculateSpeedIncrease(
-    startPosition,
     targetPosition,
+    targetSpeed,
+    startPosition,
     settings
   );
 
@@ -200,13 +206,11 @@ function calculateJunctionSpeeds(path, settings, start) {
       );
     } else {
       //TODO Recalc previous points speed
+      console.log("DOH")
 
-      junctionSpeeds.push( // ===> This is wrong!
-        junctionSpeedPoint(
-          current.position,
-          desiredFinalSpeed,
-          maxSpeed
-        )
+      junctionSpeeds.push(
+        // ===> This is wrong!
+        junctionSpeedPoint(current.position, desiredFinalSpeed, maxSpeed)
       );
     }
   }

@@ -1,7 +1,7 @@
 import { default as V } from "./vector.js";
 import * as Simulator from "./simulator";
 import simplify from "simplify-js";
-import { start } from "repl";
+import { draw } from "./animation";
 
 const getSVGGeometryElements = children => {
   const result = [];
@@ -40,6 +40,22 @@ const loadFile = inputName => {
   return document.getElementsByName(inputName)[0].files[0];
 };
 
+const renderPath = (canvas, path, startPosition) => {
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.beginPath();
+  ctx.moveTo(startPosition.x, startPosition.y);
+  path.forEach(p => ctx.lineTo(p.position.x, p.position.y));
+  ctx.strokeStyle = "black";
+  ctx.stroke();
+  // timePath.forEach(p => {
+  //   ctx.beginPath();
+  //   ctx.ellipse(p.target.x, p.target.y, 2, 2, 0, 0, 2 * Math.PI);
+  //   ctx.fillStyle = "red";
+  //   ctx.fill();
+  // });
+};
+
 const setDisplay = () => {
   let startPosition, path, timePath, canvas;
 
@@ -55,19 +71,13 @@ const setDisplay = () => {
     if (mCanvas) canvas = mCanvas;
 
     if (startPosition && path && canvas) {
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.beginPath();
-      ctx.moveTo(startPosition.x, startPosition.y);
-      path.forEach(p => ctx.lineTo(p.position.x, p.position.y));
-      ctx.strokeStyle = "black";
-      ctx.stroke();
-      // timePath.forEach(p => {
-      //   ctx.beginPath();
-      //   ctx.ellipse(p.target.x, p.target.y, 2, 2, 0, 0, 2 * Math.PI);
-      //   ctx.fillStyle = "red";
-      //   ctx.fill();
-      // });
+      const context = canvas.getContext("2d");
+      draw(context, canvas.width, canvas.height, {
+        path: timePath,
+        laserPosition: startPosition,
+        currentPathIndex: 0,
+        time: 0,
+      });
     }
   };
 };
@@ -158,7 +168,7 @@ const memoizeGivePrediction = (settingsList, inputName) => {
           []
         );
         const allY = svgPaths.reduce(
-          (res, path) => [...res, ...path.map(p => p.y - 10 )],
+          (res, path) => [...res, ...path.map(p => p.y - 10)],
           []
         );
         const minX = Math.min(...allX);

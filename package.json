@@ -5,6 +5,7 @@
     "deploy": "npm run build  && now ./public --prod"
   },
   "dependencies": {
+    "ramda": "^0.27.0",
     "simplify-js": "^1.2.4"
   },
   "devDependencies": {
