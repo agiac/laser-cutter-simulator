@@ -40,22 +40,6 @@ const loadFile = inputName => {
   return document.getElementsByName(inputName)[0].files[0];
 };
 
-const renderPath = (canvas, path, startPosition) => {
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.beginPath();
-  ctx.moveTo(startPosition.x, startPosition.y);
-  path.forEach(p => ctx.lineTo(p.position.x, p.position.y));
-  ctx.strokeStyle = "black";
-  ctx.stroke();
-  // timePath.forEach(p => {
-  //   ctx.beginPath();
-  //   ctx.ellipse(p.target.x, p.target.y, 2, 2, 0, 0, 2 * Math.PI);
-  //   ctx.fillStyle = "red";
-  //   ctx.fill();
-  // });
-};
-
 const setDisplay = () => {
   let startPosition, path, timePath, canvas;
 
@@ -71,13 +55,18 @@ const setDisplay = () => {
     if (mCanvas) canvas = mCanvas;
 
     if (startPosition && path && canvas) {
-      const context = canvas.getContext("2d");
-      draw(context, canvas.width, canvas.height, {
-        path: timePath,
-        laserPosition: startPosition,
-        currentPathIndex: 0,
-        time: 0,
-      });
+      draw(
+        {
+          context: canvas.getContext("2d"),
+          width: canvas.width,
+          height: canvas.height
+        },
+        {
+          path: timePath,
+          laserPosition: startPosition,
+          time: 0
+        }
+      );
     }
   };
 };
@@ -173,6 +162,11 @@ const memoizeGivePrediction = (settingsList, inputName) => {
         );
         const minX = Math.min(...allX);
         const minY = Math.min(...allY);
+
+        console.log(
+          `Width: ${Math.max(...allX) - minX}, Height: ${Math.max(...allY) -
+            minY}`
+        );
 
         svgPaths = svgPaths.map(path =>
           path.map(p => ({ x: p.x - minX, y: p.y - minY }))

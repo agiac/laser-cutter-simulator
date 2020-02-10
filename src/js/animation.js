@@ -6,47 +6,45 @@
 
 /**
  * @typedef {Object} FrameData
- * @property {Vector[]} path
+ * @property {Object} path
  * @property {Vector} laserPosition
- * @property {number} currentPathIndex
+ * @property {number} time
+ */
+
+/**
+ * @typedef {Object} RenderingContext
+ * @property {CanvasRenderingContext2D} context
+ * @property {number} width
+ * @property {number} height
  */
 
 ////
 
 /**
- * @param {CanvasRenderingContext2D} renderingContext canvas 2d context
- * @param {number} canvasWidth canvas width
- * @param {number} canvasHeight canvas height
- * @param {FrameData} frameData current frame
+ * @param {RenderingContext} context
  */
-const clearFrame = (renderingContext, canvasWidth, canvasHeight) => {
-  renderingContext.clearRect(0, 0, canvasWidth, canvasHeight);
+const clearFrame = context => {
+  context.context.clearRect(0, 0, context.width, context.height);
 };
 
 /**
- * @param {CanvasRenderingContext2D} renderingContext canvas 2d context
- * @param {FrameData} frameData current frame
+ * @param {RenderingContext} context
+ * @param {FrameData} frameData
  */
-const renderFrame = (renderingContext, frameData) => {
+const renderFrame = (context, frameData) => {
+  const ctx = context.context;
   const { path, laserPosition } = frameData;
-  renderingContext.beginPath();
-  renderingContext.moveTo(path[0].start.x, path[0].start.y);
-  path.forEach(p => renderingContext.lineTo(p.target.x, p.target.y));
-  renderingContext.strokeStyle = "black";
-  renderingContext.stroke();
 
-  renderingContext.beginPath();
-  renderingContext.ellipse(
-    laserPosition.x,
-    laserPosition.y,
-    5,
-    5,
-    0,
-    0,
-    2 * Math.PI
-  );
-  renderingContext.strokeStyle = "red";
-  renderingContext.stroke();
+  ctx.beginPath();
+  ctx.moveTo(path[0].start.x, path[0].start.y);
+  path.forEach(p => ctx.lineTo(p.target.x, p.target.y));
+  ctx.strokeStyle = "black";
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.ellipse(laserPosition.x, laserPosition.y, 5, 5, 0, 0, 2 * Math.PI);
+  ctx.strokeStyle = "red";
+  ctx.stroke();
 };
 
 const getPositionFromTime = (path, time) => {
@@ -66,12 +64,12 @@ const getPositionFromTime = (path, time) => {
 };
 
 /**
- * @param {FrameData} pastFrame
+ * @param {FrameData} pastFrameData
  * @param {number} ellapsedTIme
  */
-const nextFrame = (pastFrame, ellapsedTIme) => {
-  const path = pastFrame.path;
-  const time = pastFrame.time + ellapsedTIme;
+const nextFrameData = (pastFrameData, ellapsedTIme) => {
+  const path = pastFrameData.path;
+  const time = pastFrameData.time + ellapsedTIme;
 
   const laserPosition = getPositionFromTime(path, time);
 
@@ -83,34 +81,34 @@ const nextFrame = (pastFrame, ellapsedTIme) => {
 };
 
 /**
- *
- * @param {FrameData} frame
+ * @param {RenderingContext} context
+ * @param {FrameData} frameData
  */
 const renderLoop = (
-  renderingContext,
-  canvasWidth,
-  canvasHeight,
+  context,
   frameData,
   timeBefore
 ) => timeNow => {
-  clearFrame(renderingContext, canvasWidth, canvasHeight);
-  renderFrame(renderingContext, frameData);
-  const newFrame = nextFrame(
+  clearFrame(context);
+  renderFrame(context, frameData);
+  const newFrameData = nextFrameData(
     frameData,
     (timeNow - (timeBefore || timeNow)) / 1000
   );
   window.requestAnimationFrame(
-    renderLoop(renderingContext, canvasWidth, canvasHeight, newFrame, timeNow)
+    renderLoop(context, newFrameData, timeNow)
   );
 };
 
+/**
+ * @param {RenderingContext} context 
+ * @param {FrameData} frameData 
+ */
 export const draw = (
-  renderingContext,
-  canvasWidth,
-  canvasHeight,
+  context,
   frameData
 ) => {
   window.requestAnimationFrame(
-    renderLoop(renderingContext, canvasWidth, canvasHeight, frameData, null)
+    renderLoop(context, frameData, null)
   );
 };
