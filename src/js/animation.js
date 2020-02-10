@@ -30,7 +30,8 @@ const clearFrame = (renderingContext, canvasWidth, canvasHeight) => {
 const renderFrame = (renderingContext, frameData) => {
   const { path, laserPosition } = frameData;
   renderingContext.beginPath();
-  path.forEach(p => renderingContext.lineTo(p.start.x, p.start.y));
+  renderingContext.moveTo(path[0].start.x, path[0].start.y);
+  path.forEach(p => renderingContext.lineTo(p.target.x, p.target.y));
   renderingContext.strokeStyle = "black";
   renderingContext.stroke();
 
@@ -48,21 +49,20 @@ const renderFrame = (renderingContext, frameData) => {
   renderingContext.stroke();
 };
 
-const moveLaser = (
-  start,
-  currentPosition,
-  target,
-  speed,
-  acceleration,
-  ellapsedTime
-) => {
-  const startToTarget = target.sub(start);
-  const currentToTarget = currentPosition.sub(start);
-  if (currentToTarget.mag() > startToTarget.mag()) return null;
-  const dir = startToTarget.unit();
-  const displacement =
-    speed * ellapsedTime + 0.5 * acceleration * Math.pow(ellapsedTime, 2);
-  return currentPosition.add(dir.scale(displacement));
+const getPositionFromTime = (path, time) => {
+  const currentPointIdx = path.findIndex(p => p.time > time);
+
+  if (currentPointIdx >= 0) {
+    const currentPoint = path[currentPointIdx];
+    const startTime = (path[currentPointIdx - 1] || {}).time || 0;
+    const deltaTime = time - startTime;
+    const displacement =
+      currentPoint.speed * deltaTime +
+      0.5 * currentPoint.acceleration * Math.pow(deltaTime, 2);
+    return currentPoint.start.add(currentPoint.direction.scale(displacement));
+  } else {
+    return path[path.length - 1].target;
+  }
 };
 
 /**
@@ -70,34 +70,16 @@ const moveLaser = (
  * @param {number} ellapsedTIme
  */
 const nextFrame = (pastFrame, ellapsedTIme) => {
-  const { path, currentPathIndex, laserPosition, time } = pastFrame;
-  const currentPoint = path[currentPathIndex];
+  const path = pastFrame.path;
+  const time = pastFrame.time + ellapsedTIme;
 
-  const newLaserPosition = moveLaser(
-    currentPoint.start,
+  const laserPosition = getPositionFromTime(path, time);
+
+  return {
+    path,
     laserPosition,
-    currentPoint.target,
-    currentPoint.speed,
-    currentPoint.acceleration,
     time
-  );
-
-  if (newLaserPosition) {
-    return {
-      path,
-      currentPathIndex,
-      laserPosition: newLaserPosition,
-      time: time + ellapsedTIme
-    };
-  } else {
-    const newPathIndex = currentPathIndex + 1;
-    return {
-      path,
-      currentPathIndex: newPathIndex,
-      laserPosition: path[newPathIndex].start,
-      time: 0
-    };
-  }
+  };
 };
 
 /**

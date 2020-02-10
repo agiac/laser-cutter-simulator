@@ -381,11 +381,5 @@ export function estimateTime(speedPoints) {
     const time = (2 * distance) / (curr.speed + finalSpeed);
     return prev + time;
   }, 0);
-  console.log(
-    "Time: ",
-    totTime,
-    speedPoints[speedPoints.length - 1].time,
-    toZero(totTime - speedPoints[speedPoints.length - 1].time)
-  );
   return totTime;
 }
