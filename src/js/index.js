@@ -79,11 +79,11 @@ const calculateAndDisplay = (
   startPosition = V.new(0, 0)
 ) => {
   const path = pathFromPoints(svgPaths, settings);
-  const timePath = Simulator.plan(path, settings, startPosition);
+  const timePath = Simulator.simulate(path, settings, startPosition);
   const canvas = document.getElementById("canvas");
   display(startPosition, path, timePath, canvas);
 
-  const timeEstimation = Simulator.estimateTime(timePath);
+  const timeEstimation = Simulator.timeEstimation(timePath);
 
   const timeEstimationElement = document.getElementById("time-estimation");
   timeEstimationElement.innerText = `${parseInt(

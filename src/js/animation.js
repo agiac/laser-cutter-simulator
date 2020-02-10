@@ -1,3 +1,11 @@
+import { getPositionFromTime } from "./simulator";
+
+/// TYPEDEFS
+
+/**
+ * @typedef {import("./simulator").SimulatorOutputPath} SimulatorOutputPath
+ */
+
 /**
  * @typedef {Object} Vector
  * @property {number} x
@@ -6,7 +14,7 @@
 
 /**
  * @typedef {Object} FrameData
- * @property {Object} path
+ * @property {SimulatorOutputPath} path
  * @property {Vector} laserPosition
  * @property {number} time
  */
@@ -18,7 +26,7 @@
  * @property {number} height
  */
 
-////
+/// --- TYPEDEFS end
 
 /**
  * @param {RenderingContext} context
@@ -47,22 +55,6 @@ const renderFrame = (context, frameData) => {
   ctx.stroke();
 };
 
-const getPositionFromTime = (path, time) => {
-  const currentPointIdx = path.findIndex(p => p.time > time);
-
-  if (currentPointIdx >= 0) {
-    const currentPoint = path[currentPointIdx];
-    const startTime = (path[currentPointIdx - 1] || {}).time || 0;
-    const deltaTime = time - startTime;
-    const displacement =
-      currentPoint.speed * deltaTime +
-      0.5 * currentPoint.acceleration * Math.pow(deltaTime, 2);
-    return currentPoint.start.add(currentPoint.direction.scale(displacement));
-  } else {
-    return path[path.length - 1].target;
-  }
-};
-
 /**
  * @param {FrameData} pastFrameData
  * @param {number} ellapsedTIme
@@ -84,31 +76,20 @@ const nextFrameData = (pastFrameData, ellapsedTIme) => {
  * @param {RenderingContext} context
  * @param {FrameData} frameData
  */
-const renderLoop = (
-  context,
-  frameData,
-  timeBefore
-) => timeNow => {
+const renderLoop = (context, frameData, timeBefore) => timeNow => {
   clearFrame(context);
   renderFrame(context, frameData);
   const newFrameData = nextFrameData(
     frameData,
     (timeNow - (timeBefore || timeNow)) / 1000
   );
-  window.requestAnimationFrame(
-    renderLoop(context, newFrameData, timeNow)
-  );
+  window.requestAnimationFrame(renderLoop(context, newFrameData, timeNow));
 };
 
 /**
- * @param {RenderingContext} context 
- * @param {FrameData} frameData 
+ * @param {RenderingContext} context
+ * @param {FrameData} frameData
  */
-export const draw = (
-  context,
-  frameData
-) => {
-  window.requestAnimationFrame(
-    renderLoop(context, frameData, null)
-  );
+export const draw = (context, frameData) => {
+  window.requestAnimationFrame(renderLoop(context, frameData, null));
 };

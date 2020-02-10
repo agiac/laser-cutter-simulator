@@ -1,19 +1,43 @@
-function toZero(n, precision = 0.000001) {
-  if (Math.abs(n) < precision) return 0;
-  return n;
-}
+import { isZero, approxGreateOrEqual } from "./utils";
 
-function approxEqual(a, b, precision = 0.000001) {
-  return Math.abs(a - b) <= precision;
-}
+/// TYPEDEFS
 
-function approxGreater(a, b, precision = 0.000001) {
-  return a - b > precision;
-}
+/**
+ * @typedef {Object} Vector
+ * @property {number} x
+ * @property {number} y
+ */
 
-function approxGreateOrEqual(a, b, precision = 0.000001) {
-  return approxGreater(a, b) || approxEqual(a, b);
-}
+/**
+ * @typedef {Object} SimulatorSettings
+ * @property {number} maximumSpeedX
+ * @property {number} maximumSpeedY
+ * @property {number} accelerationX
+ * @property {number} accelerationY
+ * @property {number} minimumJunctionSpeed
+ * @property {number} junctionDeviation
+ * @property {number} cuttingSpeed
+ * @property {number} travelSpeed 
+ * */
+
+/**
+ * @typedef {Object} SimulatorInputPath
+ * @property {Vector} position
+ * @property {number} desiredSpeed
+ */
+
+/**
+ * @typedef {Object} SimulatorOutputPath
+ * @property {Vector} start
+ * @property {Vector} target
+ * @property {Vector} direction
+ * @property {number} speed
+ * @property {number} acceleration
+ * @property {number} time
+ */
+
+/// --- TYPEDEFS end
+
 
 function maxForcePerDirection(maxForceX, maxForceY, unitVector) {
   return Math.min(
@@ -66,7 +90,7 @@ function calculateMaximumJunctionSpeeds(path, settings, start) {
   for (var i = 0; i < path.length - 1; i++) {
     p1 = path[i].position;
     p2 = path[i + 1].position;
-    const maxJunctionSpeed = toZero(
+    const maxJunctionSpeed = isZero(
       calculateMaxJunctionSpeed(p1.sub(p0), p2.sub(p1), settings)
     );
     result.push({
@@ -236,7 +260,7 @@ function speedPoint(
   // const direction = target.sub(start);
   // const distance = direction.mag();
   // const finalSpeed = Math.sqrt(
-  //   toZero(Math.pow(speed, 2) + 2 * acceleration * distance)
+  //   isZero(Math.pow(speed, 2) + 2 * acceleration * distance)
   // );
   // const time = (2 * distance) / (speed + finalSpeed);
 
@@ -354,7 +378,13 @@ function planSegment(start, target, settings, startTime) {
   }
 }
 
-export function plan(path, settings, startPosition) {
+/**
+ * @param {SimulatorInputPath} path
+ * @param {SimulatorSettings} settings
+ * @param {Vector} startPosition
+ * @returns {SimulatorOutputPath}
+ */
+export function simulate(path, settings, startPosition) {
   const junctionSpeeds = calculateJunctionSpeeds(path, settings, startPosition);
 
   var result = [];
@@ -371,16 +401,29 @@ export function plan(path, settings, startPosition) {
   return result;
 }
 
-export function estimateTime(speedPoints) {
-  const totTime = speedPoints.reduce((prev, curr) => {
-    const direction = curr.target.sub(curr.start);
-    const distance = direction.mag();
-    const finalSpeed = Math.sqrt(
-      toZero(Math.pow(curr.speed, 2) + 2 * curr.acceleration * distance)
-    );
-    const time = (2 * distance) / (curr.speed + finalSpeed);
-    return prev + time;
-  }, 0);
-  console.log(totTime, speedPoints[speedPoints.length-1].time)
-  return totTime;
+/**
+ * @param {SimulatorOutputPath} speedPoints
+ */
+export function timeEstimation(speedPoints) {
+  return speedPoints[speedPoints.length - 1].time;
 }
+
+/**
+ * 
+ * @param {SimulatorOutputPath} path 
+ * @param {number} time 
+ */
+export function getPositionFromTime(path, time) {
+  const currentPointIdx = path.findIndex(p => p.time > time);
+  if (currentPointIdx >= 0) {
+    const currentPoint = path[currentPointIdx];
+    const startTime = (path[currentPointIdx - 1] || {}).time || 0;
+    const deltaTime = time - startTime;
+    const displacement =
+      currentPoint.speed * deltaTime +
+      0.5 * currentPoint.acceleration * Math.pow(deltaTime, 2);
+    return currentPoint.start.add(currentPoint.direction.scale(displacement));
+  } else {
+    return path[path.length - 1].target;
+  }
+};
