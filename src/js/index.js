@@ -30,14 +30,14 @@ const loadSettings = settingsList => {
   return settingsList.reduce(
     (res, setting) => ({
       ...res,
-      [`${setting}`]: parseFloat(document.getElementsByName(setting)[0].value)
+      [`${setting}`]: parseFloat(document.getElementById(setting).value)
     }),
     {}
   );
 };
 
 const loadFile = inputName => {
-  return document.getElementsByName(inputName)[0].files[0];
+  return document.getElementById(inputName).files[0];
 };
 
 const setDisplay = () => {
@@ -201,17 +201,17 @@ const fileUploadInputName = "file-upload";
 const givePrediction = memoizeGivePrediction(settingsList, fileUploadInputName);
 
 settingsList.forEach(setting => {
-  const input = document.getElementsByName(setting)[0];
+  const input = document.getElementById(setting);
   input.value = localStorage[setting] || input.value;
   input.addEventListener("change", givePrediction("settings"));
-  input.addEventListener(
-    "change",
-    e => (localStorage[setting] = e.target.value)
-  );
+  // input.addEventListener(
+  //   "change",
+  //   e => (localStorage[setting] = e.target.value)
+  // );
 });
 
 document
-  .getElementsByName("file-upload")[0]
+  .getElementById("file-upload")
   .addEventListener("change", givePrediction("file"));
 
 window.onresize = () => {

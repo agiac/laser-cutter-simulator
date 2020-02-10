@@ -17,7 +17,7 @@ import { isZero, approxGreateOrEqual } from "./utils";
  * @property {number} minimumJunctionSpeed
  * @property {number} junctionDeviation
  * @property {number} cuttingSpeed
- * @property {number} travelSpeed 
+ * @property {number} travelSpeed
  * */
 
 /**
@@ -37,7 +37,6 @@ import { isZero, approxGreateOrEqual } from "./utils";
  */
 
 /// --- TYPEDEFS end
-
 
 function maxForcePerDirection(maxForceX, maxForceY, unitVector) {
   return Math.min(
@@ -379,6 +378,46 @@ function planSegment(start, target, settings, startTime) {
 }
 
 /**
+ * Factory function
+ * @param {SimulatorSettings}
+ * @returns {SimulatorSettings}
+ */
+export function simulatorSettings({
+  maximumSpeedX = 500,
+  maximumSpeedY = 500,
+  accelerationX = 3000,
+  accelerationY = 3000,
+  minimumJunctionSpeed = 0,
+  junctionDeviation = 0.01,
+  cuttingSpeed = 100,
+  travelSpeed = 400
+}) {
+  return {
+    maximumSpeedX,
+    maximumSpeedY,
+    accelerationX,
+    accelerationY,
+    minimumJunctionSpeed,
+    junctionDeviation,
+    cuttingSpeed,
+    travelSpeed
+  };
+}
+
+export function settingsList() {
+  return [
+    "maximumSpeedX",
+    "maximumSpeedY",
+    "accelerationX",
+    "accelerationY",
+    "minimumJunctionSpeed",
+    "junctionDeviation",
+    "cuttingSpeed",
+    "travelSpeed"
+  ];
+}
+
+/**
  * @param {SimulatorInputPath} path
  * @param {SimulatorSettings} settings
  * @param {Vector} startPosition
@@ -409,9 +448,9 @@ export function timeEstimation(speedPoints) {
 }
 
 /**
- * 
- * @param {SimulatorOutputPath} path 
- * @param {number} time 
+ *
+ * @param {SimulatorOutputPath} path
+ * @param {number} time
  */
 export function getPositionFromTime(path, time) {
   const currentPointIdx = path.findIndex(p => p.time > time);
@@ -426,4 +465,4 @@ export function getPositionFromTime(path, time) {
   } else {
     return path[path.length - 1].target;
   }
-};
+}

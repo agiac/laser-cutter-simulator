@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta id="viewport" content="width=device-width, initial-scale=1" />
   <link href="style.css" rel="stylesheet" />
 </head>
 
@@ -16,29 +16,29 @@
       <h3>Machine settings:</h3>
       <label title="mm/s">
         Maximum speed X:
-        <input name="maximumSpeedX" type="number" min="1" value="500" />
+        <input id="maximumSpeedX" type="number" min="1" value="500" />
       </label>
       <label title="mm/s">
         Maximum speed Y:
-        <input name="maximumSpeedY" type="number" min="1" value="500" />
+        <input id="maximumSpeedY" type="number" min="1" value="500" />
       </label>
       <label title="mm/s^2">
         Acceleration X:
-        <input name="accelerationX" type="number" min="1" value="3000" />
+        <input id="accelerationX" type="number" min="1" value="3000" />
       </label>
       <label title="mm/s^2">
         Acceleration Y:
-        <input name="accelerationY" type="number" min="1" value="3000" />
+        <input id="accelerationY" type="number" min="1" value="3000" />
       </label>
       <h5>Advanced</h5>
       <div class="advanced">
         <label title="mm/s">
           Minimum junction speed:
-          <input name="minimumJunctionSpeed" type="number" min="0" value="0" step="0.1" />
+          <input id="minimumJunctionSpeed" type="number" min="0" value="0" step="0.1" />
         </label>
         <label title="mm">
           Junction deviation:
-          <input name="junctionDeviation" type="number" min="0" value="0.01" step="0.01" />
+          <input id="junctionDeviation" type="number" min="0" value="0.01" step="0.01" />
         </label>
       </div>
     </div class="settings-section">
@@ -46,20 +46,20 @@
       <h3>G-code settings:</h3>
       <label title="mm/s">
         Cutting speed:
-        <input name="cuttingSpeed" type="number" min="1" value="100" />
+        <input id="cuttingSpeed" type="number" min="1" value="100" />
       </label>
       <label title="mm/s">
         Travel speed:
-        <input name="travelSpeed" type="number" min="1" value="400" />
+        <input id="travelSpeed" type="number" min="1" value="400" />
       </label>
       <!-- <label>
           Engraving speed:
-          <input name="engravingSpeed" type="number" min="1" value="80" />
+          <input id="engravingSpeed" type="number" min="1" value="80" />
         </label> -->
     </div>
     <div class="settings-section">
       <h3>File:</h3>
-      <input type="file" id="file-upload" name="file-upload" accept=".svg" />
+      <input type="file" id="file-upload" id="file-upload" accept=".svg" />
     </div>
   </div>
   <div class="time-estimation-section">
@@ -74,5 +74,7 @@
   </script>
 </body>
 <script src="js/index.js"></script>
+<script src="js/index2.js"></script>
+
 
 </html>
