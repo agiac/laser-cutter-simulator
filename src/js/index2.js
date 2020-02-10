@@ -11,6 +11,11 @@ const addEventListener = R.curry((type, onEvent, element) =>
 );
 const addOnChangeEventListener = addEventListener("change");
 
+const setInLocalStorage = (key, value) => (localStorage[key] = value);
+const getFromLocalStorage = key => localStorage[key];
+
+const setValueImpure = R.curry((key, value, obj) => (obj[key] = value));
+
 // ---
 
 const simulationHandler = () => {
@@ -44,30 +49,49 @@ const updateSimulationFromNewFile = makeSimulation(R.__, null);
 
 const settingsList = Object.freeze(Simulator.settingsList());
 
+// const loadSettings = settingsList => {
+//   var settings = R.zipObj(
+//     settingsList,
+//     R.map(getElementByIdAndApply(R.prop("value")), settingsList)
+//   );
+
+//   return (setting, value) => {
+//     settings = R.set(R.lensProp(setting), value, settings);
+//     return settings;
+//   };
+// };
+
+// const loadSettings = settingsList => () =>
+//   R.zipObj(
+//     settingsList,
+//     R.map(
+//       getElementByIdAndApply(R.either(R.pipe(R.prop("id"), getFromLocalStorage), R.prop("value"))),
+//       settingsList
+//     )
+//   );
+
 const loadSettings = settingsList => {
-  var settings = R.zipObj(
-    settingsList,
-    R.map(getElementByIdAndApply(R.prop("value")), settingsList)
+  R.map(
+    getElementByIdAndApply(element => {
+      setValueImpure("value", getFromLocalStorage(element.id) || element.value, element);
+    }),
+    settingsList
   );
 
-  return (setting, value) => {
-    settings = R.set(R.lensProp(setting), value, settings);
-    return settings;
+  return () => {
+    return R.zipObj(settingsList, R.map(getElementByIdAndApply(R.prop("value")), settingsList));
   };
 };
 
-const updateSettings = loadSettings(settingsList);
-const getSettings = () => updateSettings();
+const getSettings = loadSettings(settingsList);
 
 const onSettingChanged = e => {
-  const { setting, value } = e.target;
-  localStorage[setting] = value;
-  const updatedSettings = updateSettings(setting, value);
+  const { id, value } = e.target;
+  setInLocalStorage(id, value);
+  const updatedSettings = getSettings();
 };
 
 const setupSettings = settingsList =>
   R.map(getElementByIdAndApply(addOnChangeEventListener(onSettingChanged)), settingsList);
 
 setupSettings(settingsList);
-
-console.log(getSettings());

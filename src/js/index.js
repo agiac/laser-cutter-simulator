@@ -202,7 +202,7 @@ const givePrediction = memoizeGivePrediction(settingsList, fileUploadInputName);
 
 settingsList.forEach(setting => {
   const input = document.getElementById(setting);
-  input.value = localStorage[setting] || input.value;
+  // input.value = localStorage[setting] || input.value;
   input.addEventListener("change", givePrediction("settings"));
   // input.addEventListener(
   //   "change",
