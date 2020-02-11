@@ -91,10 +91,10 @@ canvas {
   justify-content: center;
   font-size: large;
   font-weight: bolder;
-  color: cornflowerblue;
   text-transform: uppercase;
   visibility: hidden;
   flex-flow: column;
+  animation: color-change 1s alternate-reverse infinite;
 }
 
 .loader > div {
@@ -110,5 +110,14 @@ canvas {
 @keyframes spin {
   100% {
     transform: rotate(360deg) scale(2);
+  }
+}
+
+@keyframes color-change {
+  0% {
+    color: cornflowerblue;
+  }
+  100% {
+    color: royalblue;
   }
 }

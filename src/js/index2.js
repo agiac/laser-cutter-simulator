@@ -1,88 +1,8 @@
 import * as R from "ramda";
 import * as Simulator from "./simulator";
 import { default as V } from "./vector.js";
-import simplify from "simplify-js";
 import { combineReducers, createStore } from "redux";
-
-// UTILS
-
-const getElementById = id => document.getElementById(id);
-const getElementByIdAndApply = R.curry((fn, id) => R.pipe(getElementById, fn)(id));
-
-const addEventListener = R.curry((type, onEvent, element) =>
-  element.addEventListener(type, onEvent)
-);
-const addOnChangeEventListener = addEventListener("change");
-
-const setInLocalStorage = (key, value) => (localStorage[key] = value);
-const getFromLocalStorage = key => localStorage[key];
-const numberFromLocalStorage = R.pipe(getFromLocalStorage, parseFloat);
-
-const setValueImpure = R.curry((key, value, obj) => (obj[key] = value));
-
-const getSVGGeometryElements = children => {
-  const result = [];
-
-  const recurseChildren = children => {
-    for (const child of children) {
-      if (child.children.length === 0) {
-        if (
-          typeof child.getTotalLength === "function" &&
-          typeof child.getPointAtLength === "function"
-        ) {
-          result.push(child);
-        }
-      } else {
-        recurseChildren(child.children);
-      }
-    }
-  };
-
-  recurseChildren(children);
-
-  return result;
-};
-
-const getPathFromSVGGeomentryElements = (elements, settings) => {
-  const svgPaths = elements.map(element => {
-    const elementPoints = [];
-    const totLength = element.getTotalLength();
-    for (var l = 0; l < totLength; l += 1) {
-      elementPoints.push({
-        x: element.getPointAtLength(l).x,
-        y: element.getPointAtLength(l).y
-      });
-    }
-    return simplify(elementPoints, 0.5);
-  });
-
-  const allX = svgPaths.reduce((res, path) => [...res, ...path.map(p => p.x)], []);
-  const allY = svgPaths.reduce((res, path) => [...res, ...path.map(p => p.y)], []);
-  const minX = Math.min(...allX);
-  const minY = Math.min(...allY);
-  const corneredSvgPaths = svgPaths.map(path =>
-    path.map(p => ({ x: p.x - minX + 1, y: p.y - minY + 1 }))
-  );
-
-  return corneredSvgPaths.reduce((result, path) => {
-    return [
-      ...result,
-      ...path.map(({ x, y }, index) => {
-        if (index === 0) {
-          return {
-            position: V.new(x, y),
-            desiredSpeed: settings.travelSpeed
-          };
-        } else {
-          return {
-            position: V.new(x, y),
-            desiredSpeed: settings.cuttingSpeed
-          };
-        }
-      })
-    ];
-  }, []);
-};
+import { idSelect, addOnChangeEventListener, setInLocalStorage, pathFromSvgFile } from "./utils";
 
 // ACTIONS TYPES
 
@@ -105,7 +25,7 @@ const changePath = path => ({
 
 const initialSettingsState = Simulator.defaultSettings();
 Object.entries(initialSettingsState).forEach(
-  ([setting, value]) => (getElementById(setting).value = value)
+  ([setting, value]) => (idSelect(setting).value = value)
 );
 const settingsList = R.keys(initialSettingsState);
 
@@ -140,13 +60,11 @@ const handleChange = () => {
     const simulation = Simulator.simulate(path, settings, V.new(0, 0));
     const timeEstimation = Simulator.timeEstimation(simulation);
 
-    const loader = document.querySelector(".loader");
-    loader.style.visibility = "hidden";
+    const formatSeconds = seconds => `${parseInt(seconds / 60)} min. ${parseInt(seconds % 60)} sec.`;
 
-    document.getElementById("time-estimation").innerText = `${parseInt(
-      timeEstimation / 60
-    )} min. ${parseInt(timeEstimation % 60)} sec.`;
+    document.getElementById("time-estimation").innerText = formatSeconds(timeEstimation);
   }
+  idSelect("loader").style.visibility = "hidden";
 };
 
 store.subscribe(handleChange);
@@ -158,34 +76,22 @@ const onSettingChanged = e => {
   store.dispatch(changeSetting(e.target.id, e.target.value));
 };
 
-settingsList.map(R.pipe(getElementById, addOnChangeEventListener(onSettingChanged)));
+settingsList.map(R.pipe(idSelect, addOnChangeEventListener(onSettingChanged)));
 
 // FILE UPLOAD DISPATCHER
 
 const fileUploadInputId = "file-upload";
 
-const onFileUpload = async e => {
-  document.getElementById("time-estimation").innerText = "--- min.";
-
-  const loader = document.querySelector(".loader");
-  loader.style.visibility = "visible";
-  loader.style["pointer-event"] = "none";
-
+const onFileUpload = e => {
   const svgFile = e.target.files[0];
 
-  const svgText = await svgFile.text();
+  idSelect("time-estimation").innerText = "--- min.";
+  idSelect("loader").style.visibility = "visible";
 
-  const parser = new DOMParser();
-  const svgDocument = parser.parseFromString(svgText, "image/svg+xml");
-  const svgElement = svgDocument.querySelector("svg");
-  document.body.append(svgElement);
-
-  const svgElements = getSVGGeometryElements(svgElement.children);
-  const path = getPathFromSVGGeomentryElements(svgElements, store.getState().settings);
-
-  svgElement.remove();
-
-  store.dispatch(changePath(path));
+  setTimeout(async () => {
+    const path = await pathFromSvgFile(svgFile, store.getState().settings);
+    store.dispatch(changePath(path));
+  }, 50);
 };
 
-getElementByIdAndApply(addOnChangeEventListener(onFileUpload), fileUploadInputId);
+R.pipe(idSelect, addOnChangeEventListener(onFileUpload))(fileUploadInputId);
