@@ -38,6 +38,9 @@ import { isZero, approxGreateOrEqual } from "./utils";
 
 /// --- TYPEDEFS end
 
+const getFromLocalStorage = key => localStorage[key];
+const numberFromLocalStorage = key => parseFloat(getFromLocalStorage(key));
+
 function maxForcePerDirection(maxForceX, maxForceY, unitVector) {
   return Math.min(
     Math.abs(maxForceX / unitVector.x) || 1000000000,
@@ -71,10 +74,7 @@ function calculateMaxJunctionSpeed(v1, v2, settings) {
       const sin_theta_d2 = Math.sqrt(0.5 * (1.0 - junction_cos_theta));
       return Math.max(
         minimumJunctionSpeed * minimumJunctionSpeed,
-        Math.sqrt(
-          (junction_acceleration * junctionDeviation * sin_theta_d2) /
-            (1.0 - sin_theta_d2)
-        )
+        Math.sqrt((junction_acceleration * junctionDeviation * sin_theta_d2) / (1.0 - sin_theta_d2))
       );
     }
   }
@@ -89,9 +89,7 @@ function calculateMaximumJunctionSpeeds(path, settings, start) {
   for (var i = 0; i < path.length - 1; i++) {
     p1 = path[i].position;
     p2 = path[i + 1].position;
-    const maxJunctionSpeed = isZero(
-      calculateMaxJunctionSpeed(p1.sub(p0), p2.sub(p1), settings)
-    );
+    const maxJunctionSpeed = isZero(calculateMaxJunctionSpeed(p1.sub(p0), p2.sub(p1), settings));
     result.push({
       position: p1,
       maxJunctionSpeed
@@ -107,12 +105,7 @@ function calculateMaximumJunctionSpeeds(path, settings, start) {
   return result;
 }
 
-function calculateSpeedIncrease(
-  startPosition,
-  startSpeed,
-  targetPosition,
-  settings
-) {
+function calculateSpeedIncrease(startPosition, startSpeed, targetPosition, settings) {
   const startToTargetVector = targetPosition.sub(startPosition);
   const startToTargetDirection = startToTargetVector.unit();
 
@@ -124,8 +117,7 @@ function calculateSpeedIncrease(
   const displacement = startToTargetVector.mag();
 
   return Math.abs(
-    Math.sqrt(Math.pow(startSpeed, 2) + 2 * acceleration * displacement) -
-      startSpeed
+    Math.sqrt(Math.pow(startSpeed, 2) + 2 * acceleration * displacement) - startSpeed
   );
 }
 
@@ -143,18 +135,10 @@ function canReachTargetSpeed(
     settings
   );
 
-  return approxGreateOrEqual(
-    speedIncrease,
-    Math.abs(desiredStartSpeed - targetSpeed)
-  );
+  return approxGreateOrEqual(speedIncrease, Math.abs(desiredStartSpeed - targetSpeed));
 }
 
-function calculateMaxSpeedToReachTargetSpeed(
-  startPosition,
-  targetPosition,
-  targetSpeed,
-  settings
-) {
+function calculateMaxSpeedToReachTargetSpeed(startPosition, targetPosition, targetSpeed, settings) {
   const speedIncrease = calculateSpeedIncrease(
     targetPosition,
     targetSpeed,
@@ -174,11 +158,7 @@ function junctionSpeedPoint(position, finalSpeed, maxSpeed) {
 }
 
 function calculateJunctionSpeeds(path, settings, start) {
-  const maxJunctionSpeeds = calculateMaximumJunctionSpeeds(
-    path,
-    settings,
-    start
-  );
+  const maxJunctionSpeeds = calculateMaximumJunctionSpeeds(path, settings, start);
 
   const junctionSpeeds = [];
 
@@ -213,9 +193,7 @@ function calculateJunctionSpeeds(path, settings, start) {
         settings
       )
     ) {
-      junctionSpeeds.push(
-        junctionSpeedPoint(current.position, desiredFinalSpeed, maxSpeed)
-      );
+      junctionSpeeds.push(junctionSpeedPoint(current.position, desiredFinalSpeed, maxSpeed));
     } else if (desiredFinalSpeed >= next.finalSpeed) {
       const maxSpeedToReachTargetSpeed = calculateMaxSpeedToReachTargetSpeed(
         current.position,
@@ -225,11 +203,7 @@ function calculateJunctionSpeeds(path, settings, start) {
       );
 
       junctionSpeeds.push(
-        junctionSpeedPoint(
-          current.position,
-          maxSpeedToReachTargetSpeed,
-          maxSpeed
-        )
+        junctionSpeedPoint(current.position, maxSpeedToReachTargetSpeed, maxSpeed)
       );
     } else {
       //TODO Recalc previous points speed
@@ -245,14 +219,7 @@ function calculateJunctionSpeeds(path, settings, start) {
   return junctionSpeeds.reverse();
 }
 
-function speedPoint(
-  start,
-  target,
-  speed,
-  targetSpeed,
-  acceleration,
-  startTime
-) {
+function speedPoint(start, target, speed, targetSpeed, acceleration, startTime) {
   const direction = target.sub(start).unit();
   const time = (2 * target.sub(start).mag()) / (speed + targetSpeed);
 
@@ -286,22 +253,16 @@ function planSegment(start, target, settings, startTime) {
   const speedToTarget = target.maxSpeed;
 
   var startToPoint2Distance =
-    (Math.pow(speedToTarget, 2) - Math.pow(start.speed, 2)) /
-    (2 * accelerationToTarget);
+    (Math.pow(speedToTarget, 2) - Math.pow(start.speed, 2)) / (2 * accelerationToTarget);
   var point3ToTargetDistance =
-    (Math.pow(target.finalSpeed, 2) - Math.pow(speedToTarget, 2)) /
-    (2 * -accelerationToTarget);
+    (Math.pow(target.finalSpeed, 2) - Math.pow(speedToTarget, 2)) / (2 * -accelerationToTarget);
 
   var point2Position, point3Position;
   var point1, point2, point3;
 
   if (startToPoint2Distance + point3ToTargetDistance < startToTarget.mag()) {
-    point2Position = start.position.add(
-      directionToTarget.scale(startToPoint2Distance)
-    );
-    point3Position = target.position.sub(
-      directionToTarget.scale(point3ToTargetDistance)
-    );
+    point2Position = start.position.add(directionToTarget.scale(startToPoint2Distance));
+    point3Position = target.position.sub(directionToTarget.scale(point3ToTargetDistance));
 
     point1 = speedPoint(
       start.position,
@@ -336,16 +297,10 @@ function planSegment(start, target, settings, startTime) {
         (Math.pow(start.speed, 2) + Math.pow(target.finalSpeed, 2)) / 2
     );
     startToPoint2Distance =
-      (Math.pow(point2Speed, 2) - Math.pow(start.speed, 2)) /
-      (2 * accelerationToTarget);
-    point2Position = start.position.add(
-      directionToTarget.scale(startToPoint2Distance)
-    );
+      (Math.pow(point2Speed, 2) - Math.pow(start.speed, 2)) / (2 * accelerationToTarget);
+    point2Position = start.position.add(directionToTarget.scale(startToPoint2Distance));
 
-    if (
-      startToPoint2Distance > startToTarget.mag() ||
-      startToPoint2Distance < 0
-    ) {
+    if (startToPoint2Distance > startToTarget.mag() || startToPoint2Distance < 0) {
       point1 = speedPoint(
         start.position,
         target.position,
@@ -379,42 +334,19 @@ function planSegment(start, target, settings, startTime) {
 
 /**
  * Factory function
- * @param {SimulatorSettings}
  * @returns {SimulatorSettings}
  */
-export function simulatorSettings({
-  maximumSpeedX = 500,
-  maximumSpeedY = 500,
-  accelerationX = 3000,
-  accelerationY = 3000,
-  minimumJunctionSpeed = 0,
-  junctionDeviation = 0.01,
-  cuttingSpeed = 100,
-  travelSpeed = 400
-}) {
+export function defaultSettings() {
   return {
-    maximumSpeedX,
-    maximumSpeedY,
-    accelerationX,
-    accelerationY,
-    minimumJunctionSpeed,
-    junctionDeviation,
-    cuttingSpeed,
-    travelSpeed
+    maximumSpeedX: numberFromLocalStorage("maximumSpeedX") || 500,
+    maximumSpeedY: numberFromLocalStorage("maximumSpeedY") || 500,
+    accelerationX: numberFromLocalStorage("accelerationX") || 3000,
+    accelerationY: numberFromLocalStorage("accelerationY") || 3000,
+    minimumJunctionSpeed: numberFromLocalStorage("minimumJunctionSpeed") || 0,
+    junctionDeviation: numberFromLocalStorage("junctionDeviation") || 0.01,
+    cuttingSpeed: numberFromLocalStorage("cuttingSpeed") || 100,
+    travelSpeed: numberFromLocalStorage("travelSpeed") || 400
   };
-}
-
-export function settingsList() {
-  return [
-    "maximumSpeedX",
-    "maximumSpeedY",
-    "accelerationX",
-    "accelerationY",
-    "minimumJunctionSpeed",
-    "junctionDeviation",
-    "cuttingSpeed",
-    "travelSpeed"
-  ];
 }
 
 /**
@@ -459,8 +391,7 @@ export function getPositionFromTime(path, time) {
     const startTime = (path[currentPointIdx - 1] || {}).time || 0;
     const deltaTime = time - startTime;
     const displacement =
-      currentPoint.speed * deltaTime +
-      0.5 * currentPoint.acceleration * Math.pow(deltaTime, 2);
+      currentPoint.speed * deltaTime + 0.5 * currentPoint.acceleration * Math.pow(deltaTime, 2);
     return currentPoint.start.add(currentPoint.direction.scale(displacement));
   } else {
     return path[path.length - 1].target;

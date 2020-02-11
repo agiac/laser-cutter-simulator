@@ -60,7 +60,9 @@ const getPathFromSVGGeomentryElements = (elements, settings) => {
   const allY = svgPaths.reduce((res, path) => [...res, ...path.map(p => p.y)], []);
   const minX = Math.min(...allX);
   const minY = Math.min(...allY);
-  const corneredSvgPaths = svgPaths.map(path => path.map(p => ({ x: p.x - minX, y: p.y - minY })));
+  const corneredSvgPaths = svgPaths.map(path =>
+    path.map(p => ({ x: p.x - minX + 1, y: p.y - minY + 1 }))
+  );
 
   return corneredSvgPaths.reduce((result, path) => {
     return [
@@ -82,6 +84,8 @@ const getPathFromSVGGeomentryElements = (elements, settings) => {
   }, []);
 };
 
+
+
 // ACTIONS TYPES
 
 const CHANGE_SETTING = "CHANGE_SETTING";
@@ -101,24 +105,11 @@ const changePath = path => ({
 
 // REDUCERS
 
-const initialSettingsState = {
-  maximumSpeedX: numberFromLocalStorage("maximumSpeedX") || 500,
-  maximumSpeedY: numberFromLocalStorage("maximumSpeedY") || 500,
-  accelerationX: numberFromLocalStorage("accelerationX") || 3000,
-  accelerationY: numberFromLocalStorage("accelerationY") || 3000,
-  minimumJunctionSpeed: numberFromLocalStorage("minimumJunctionSpeed") || 0,
-  junctionDeviation: numberFromLocalStorage("junctionDeviation") || 0.01,
-  cuttingSpeed: numberFromLocalStorage("cuttingSpeed") || 100,
-  travelSpeed: numberFromLocalStorage("travelSpeed") || 400
-};
-
+const initialSettingsState = Simulator.defaultSettings();
+Object.entries(initialSettingsState).forEach(
+  ([setting, value]) => (getElementById(setting).value = value)
+);
 const settingsList = R.keys(initialSettingsState);
-
-settingsList.forEach(setting => {
-  const ls = getFromLocalStorage(setting);
-  const element = getElementById(setting);
-  element.value = ls || element.value;
-});
 
 const settingsReducer = (state = initialSettingsState, action) => {
   switch (action.type) {
@@ -148,8 +139,12 @@ const handleChange = () => {
   const { settings, path } = store.getState();
 
   if (path.length > 0) {
+    const simulation = Simulator.simulate(path, settings, V.new(0, 0));
+    const timeEstimation = Simulator.timeEstimation(simulation);
 
-    const simulation = Simulator.simulate(path, settings, V.new(0,0));
+    document.getElementById("time-estimation").innerText = `${parseInt(
+      timeEstimation / 60
+    )} min. ${parseInt(timeEstimation % 60)} sec.`;
   }
 };
 
