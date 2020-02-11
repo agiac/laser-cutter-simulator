@@ -46,9 +46,6 @@ import { isZero, approxGreateOrEqual } from "./utils";
 
 /// --- TYPEDEFS end
 
-const getFromLocalStorage = key => localStorage[key];
-const numberFromLocalStorage = key => parseFloat(getFromLocalStorage(key));
-
 function maxForcePerDirection(maxForceX, maxForceY, unitVector) {
   return Math.min(
     Math.abs(maxForceX / unitVector.x) || 1000000000,
@@ -340,8 +337,9 @@ function planSegment(start, target, settings, startTime) {
   }
 }
 
+const numberFromLocalStorage = key => parseFloat(localStorage[key]);
+
 /**
- * Factory function
  * @returns {SimulatorSettings}
  */
 export function defaultSettings() {
