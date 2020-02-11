@@ -52,6 +52,7 @@ export const addEventListener = R.curry((type, onEvent, element) =>
 );
 
 export const addOnChangeEventListener = addEventListener("change");
+export const addOnClickEventListener = addEventListener("click");
 
 export function setInLocalStorage(key, value) {
   localStorage[key] = value;

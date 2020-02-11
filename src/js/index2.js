@@ -2,13 +2,20 @@ import * as R from "ramda";
 import * as Simulator from "./simulator";
 import { default as V } from "./vector.js";
 import { combineReducers, createStore } from "redux";
-import { idSelect, addOnChangeEventListener, setInLocalStorage, pathFromSvgFile } from "./utils";
+import {
+  idSelect,
+  addOnChangeEventListener,
+  addOnClickEventListener,
+  setInLocalStorage,
+  pathFromSvgFile
+} from "./utils";
 import { draw } from "./animation";
 
 // ACTIONS TYPES
 
 const CHANGE_SETTING = "CHANGE_SETTING";
 const CHANGE_PATH = "CHANGE_PATH";
+const CHANGE_ANIMATION = "CHANGE_ANIMATION";
 
 // ACTIONS CREATORS
 
@@ -20,6 +27,11 @@ const changeSetting = (setting, value) => ({
 const changePath = path => ({
   type: CHANGE_PATH,
   path
+});
+
+const changeAnimation = animation => ({
+  type: CHANGE_ANIMATION,
+  animation
 });
 
 // REDUCERS
@@ -48,14 +60,27 @@ const pathReducer = (state = [], action) => {
   }
 };
 
-const appReducer = combineReducers({ settings: settingsReducer, path: pathReducer });
+const animationReducer = (state = null, action) => {
+  switch (action.type) {
+    case CHANGE_ANIMATION:
+      return action.animation;
+    default:
+      return state;
+  }
+};
+
+const appReducer = combineReducers({
+  settings: settingsReducer,
+  path: pathReducer,
+  animation: animationReducer
+});
 
 // STORE
 
 const store = createStore(appReducer);
 
 const handleChange = () => {
-  const { settings, path } = store.getState();
+  const { settings, path, animation } = store.getState();
 
   if (path.length > 0) {
     const simulation = Simulator.simulate(path, settings, V.new(0, 0));
@@ -66,20 +91,21 @@ const handleChange = () => {
 
     document.getElementById("time-estimation").innerText = formatSeconds(timeEstimation);
 
-    const canvas = idSelect("canvas");
 
-    draw(
-      {
-        context: canvas.getContext("2d"),
-        width: canvas.width,
-        height: canvas.height
-      },
-      {
-        path: simulation,
-        laserPosition: V.new(0, 0),
-        time: 0
-      }
-    );
+    // const canvas = idSelect("canvas");
+
+    // draw(
+    //   {
+    //     context: canvas.getContext("2d"),
+    //     width: canvas.width,
+    //     height: canvas.height
+    //   },
+    //   {
+    //     path: simulation,
+    //     laserPosition: V.new(0, 0),
+    //     time: 0
+    //   }
+    // );
   }
   idSelect("loader").style.visibility = "hidden";
 };
@@ -112,3 +138,17 @@ const onFileUpload = e => {
 };
 
 R.pipe(idSelect, addOnChangeEventListener(onFileUpload))(fileUploadInputId);
+
+// ANIMATION DISPATCHER
+
+const onPlay = () => store.dispatch(changeAnimation("play"));
+
+R.pipe(idSelect, addOnClickEventListener(onPlay))("play");
+
+const onPause = () => store.dispatch(changeAnimation("pause"));
+
+R.pipe(idSelect, addOnClickEventListener(onPause))("pause");
+
+const onStop = () => store.dispatch(changeAnimation("stop"));
+
+R.pipe(idSelect, addOnClickEventListener(onStop))("stop");
