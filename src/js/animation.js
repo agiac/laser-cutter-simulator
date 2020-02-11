@@ -98,7 +98,6 @@ export function AnimationHandler() {
     if (mFrameData.time >= mFrameData.path[mFrameData.path.length - 1].time) {
       mFrameData.time = 0;
       isPlaying = false;
-      timeLast = null;
     }
 
     if (isPlaying) {
