@@ -12,5 +12,8 @@
   "devDependencies": {
     "cssnano": "^4.1.10",
     "parcel-bundler": "1.12.4"
-  }
+  },
+  "browserslist": [
+    "last 2 Chrome versions"
+  ]
 }
