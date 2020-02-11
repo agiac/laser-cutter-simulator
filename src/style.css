@@ -61,13 +61,13 @@ input {
 }
 
 .time-estimation-section {
-    display: flex;
-    color: cornflowerblue;
-    margin-top: 16px;
+  display: flex;
+  color: cornflowerblue;
+  margin-top: 16px;
 }
 
 .time-estimation-section h2 {
-    margin-right: 16px;
+  margin-right: 16px;
 }
 
 canvas {
@@ -76,4 +76,39 @@ canvas {
   height: 800px;
   background-color: #fafafa;
   margin-top: 24px;
+}
+
+.loader {
+  position: fixed;
+  background-color: rgba(255, 255, 255, 0.85);
+  top: 0px;
+  left: 0px;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: large;
+  font-weight: bolder;
+  color: cornflowerblue;
+  text-transform: uppercase;
+  visibility: hidden;
+  flex-flow: column;
+}
+
+.loader > div {
+  width: 20px;
+  height: 20px;
+  background-color: royalblue;
+  border: cornflowerblue solid 5px;
+  margin: 50px;
+  animation: spin 1s alternate infinite;
+  border-radius: 7px;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg) scale(2);
+  }
 }

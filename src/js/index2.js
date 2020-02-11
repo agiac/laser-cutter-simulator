@@ -84,8 +84,6 @@ const getPathFromSVGGeomentryElements = (elements, settings) => {
   }, []);
 };
 
-
-
 // ACTIONS TYPES
 
 const CHANGE_SETTING = "CHANGE_SETTING";
@@ -142,6 +140,9 @@ const handleChange = () => {
     const simulation = Simulator.simulate(path, settings, V.new(0, 0));
     const timeEstimation = Simulator.timeEstimation(simulation);
 
+    const loader = document.querySelector(".loader");
+    loader.style.visibility = "hidden";
+
     document.getElementById("time-estimation").innerText = `${parseInt(
       timeEstimation / 60
     )} min. ${parseInt(timeEstimation % 60)} sec.`;
@@ -164,6 +165,12 @@ settingsList.map(R.pipe(getElementById, addOnChangeEventListener(onSettingChange
 const fileUploadInputId = "file-upload";
 
 const onFileUpload = async e => {
+  document.getElementById("time-estimation").innerText = "--- min.";
+
+  const loader = document.querySelector(".loader");
+  loader.style.visibility = "visible";
+  loader.style["pointer-event"] = "none";
+
   const svgFile = e.target.files[0];
 
   const svgText = await svgFile.text();
