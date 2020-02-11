@@ -18,57 +18,35 @@ const setValueImpure = R.curry((key, value, obj) => (obj[key] = value));
 
 // ---
 
+const SimulationEvent = new CustomEvent("simulation", {
+  detail: { simulationResult: () => getSimulation() }
+});
+
 const simulationHandler = () => {
-  var mFile, mSettings;
+  var mPath, mSettings;
 
-  return R.curry((file, settings) => {
-    if (!mFile) mFile = file;
-    if (!mSettings) mSettings = settings;
+  return R.curry((path, settings) => {
+    if (!mPath || path) mPath = path;
+    if (!mSettings || settings) mSettings = settings;
 
-    if (!mFile || !mSettings) return null;
+    if (!mPath || !mSettings) return null;
 
-    //Predict
-    Simulator.simulate();
+    // return Simulator.simulate(path, settings);
     return 123;
   });
 };
 
-const makeSimulation = simulationHandler();
-const updateSimulationFromNewSettings = makeSimulation(null);
-const updateSimulationFromNewFile = makeSimulation(R.__, null);
+const getSimulation = simulationHandler();
+const updateSimulationFromNewSettings = getSimulation(null);
+const updateSimulationFromNewFile = getSimulation(R.__, null);
 
-// const onSettingsChanged = settings => {
-//   updateSimulationFromNewSettings(settings);
-// };
-
-// const onFileUpload = file => {
-//   updateSimulationFromNewFile(file);
-// };
+const onNewSimulation = simulationResult => {
+  if (simulationResult) console.log("A new simulation!");
+};
 
 // SETTINGS
 
 const settingsList = Object.freeze(Simulator.settingsList());
-
-// const loadSettings = settingsList => {
-//   var settings = R.zipObj(
-//     settingsList,
-//     R.map(getElementByIdAndApply(R.prop("value")), settingsList)
-//   );
-
-//   return (setting, value) => {
-//     settings = R.set(R.lensProp(setting), value, settings);
-//     return settings;
-//   };
-// };
-
-// const loadSettings = settingsList => () =>
-//   R.zipObj(
-//     settingsList,
-//     R.map(
-//       getElementByIdAndApply(R.either(R.pipe(R.prop("id"), getFromLocalStorage), R.prop("value"))),
-//       settingsList
-//     )
-//   );
 
 const loadSettings = settingsList => {
   R.map(
@@ -89,9 +67,37 @@ const onSettingChanged = e => {
   const { id, value } = e.target;
   setInLocalStorage(id, value);
   const updatedSettings = getSettings();
+  const simulationResult = updateSimulationFromNewSettings(updatedSettings);
+  onNewSimulation(simulationResult);
 };
 
 const setupSettings = settingsList =>
   R.map(getElementByIdAndApply(addOnChangeEventListener(onSettingChanged)), settingsList);
 
 setupSettings(settingsList);
+
+// ---
+
+// File
+
+const fileUploadInputId = "file-upload";
+
+const onFileUpload = e => {
+  console.log(e.target.files[0]);
+  // Get path from file
+  var path = [1, 2, 3];
+  const simulationResult = updateSimulationFromNewFile(path);
+  e.target.dispatchEvent(SimulationEvent);
+  onNewSimulation(simulationResult);
+};
+
+const setupFileHandling = fileUploadInputId => {
+  getElementByIdAndApply(addOnChangeEventListener(onFileUpload), fileUploadInputId);
+};
+
+setupFileHandling(fileUploadInputId);
+
+// Display 
+
+getElementByIdAndApply(addEventListener('simulation', () => console.log("Simulation event")), 'time-estimation')
+
