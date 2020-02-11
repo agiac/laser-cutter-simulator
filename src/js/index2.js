@@ -3,6 +3,7 @@ import * as Simulator from "./simulator";
 import { default as V } from "./vector.js";
 import { combineReducers, createStore } from "redux";
 import { idSelect, addOnChangeEventListener, setInLocalStorage, pathFromSvgFile } from "./utils";
+import { draw } from "./animation";
 
 // ACTIONS TYPES
 
@@ -60,9 +61,25 @@ const handleChange = () => {
     const simulation = Simulator.simulate(path, settings, V.new(0, 0));
     const timeEstimation = Simulator.timeEstimation(simulation);
 
-    const formatSeconds = seconds => `${parseInt(seconds / 60)} min. ${parseInt(seconds % 60)} sec.`;
+    const formatSeconds = seconds =>
+      `${parseInt(seconds / 60)} min. ${parseInt(seconds % 60)} sec.`;
 
     document.getElementById("time-estimation").innerText = formatSeconds(timeEstimation);
+
+    const canvas = idSelect("canvas");
+
+    draw(
+      {
+        context: canvas.getContext("2d"),
+        width: canvas.width,
+        height: canvas.height
+      },
+      {
+        path: simulation,
+        laserPosition: V.new(0, 0),
+        time: 0
+      }
+    );
   }
   idSelect("loader").style.visibility = "hidden";
 };

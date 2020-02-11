@@ -70,6 +70,23 @@ input {
   margin-right: 16px;
 }
 
+.animation-cotrollers {
+  display: flex;
+  width: 100%;
+  max-width: var(--max-width);
+  margin-top: 24px;
+}
+
+.animation-cotrollers .material-icons {
+  font-size: 36px;
+  cursor: pointer;
+}
+
+.material-icons:hover {
+  transform: scale(1.2);
+  color: cornflowerblue;
+}
+
 canvas {
   width: 100%;
   max-width: var(--max-width);

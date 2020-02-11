@@ -98,7 +98,7 @@ function getPathFromSVGGeomentryElements(elements, settings) {
   const minX = Math.min(...allX);
   const minY = Math.min(...allY);
   const corneredSvgPaths = svgPaths.map(path =>
-    path.map(p => ({ x: p.x - minX + 1, y: p.y - minY + 1 }))
+    path.map(p => ({ x: p.x - minX + 10, y: p.y - minY + 10 }))
   );
 
   return corneredSvgPaths.reduce((result, path) => {
