@@ -9,7 +9,7 @@ import {
   setInLocalStorage,
   pathFromSvgFile
 } from "./utils";
-import { draw } from "./animation";
+import { AnimationHandler, draw } from "./animation";
 
 // ACTIONS TYPES
 
@@ -69,44 +69,51 @@ const animationReducer = (state = null, action) => {
   }
 };
 
+const lastAction = (state = null, action) => {
+  return action.type;
+};
+
 const appReducer = combineReducers({
   settings: settingsReducer,
   path: pathReducer,
-  animation: animationReducer
+  animation: animationReducer,
+  lastAction
 });
 
 // STORE
 
 const store = createStore(appReducer);
 
-const handleChange = () => {
-  const { settings, path, animation } = store.getState();
+const animationHandler = AnimationHandler();
 
-  if (path.length > 0) {
+const canvas = idSelect("canvas");
+
+animationHandler.setContext(canvas.getContext("2d"), canvas.width, canvas.height);
+
+const handleChange = () => {
+  const { settings, path, animation, lastAction } = store.getState();
+
+  console.log(lastAction);
+
+  if (lastAction === CHANGE_PATH || (lastAction === CHANGE_SETTING && path.length > 0)) {
     const simulation = Simulator.simulate(path, settings, V.new(0, 0));
     const timeEstimation = Simulator.timeEstimation(simulation);
 
     const formatSeconds = seconds =>
       `${parseInt(seconds / 60)} min. ${parseInt(seconds % 60)} sec.`;
-
     document.getElementById("time-estimation").innerText = formatSeconds(timeEstimation);
 
-
-    // const canvas = idSelect("canvas");
-
-    // draw(
-    //   {
-    //     context: canvas.getContext("2d"),
-    //     width: canvas.width,
-    //     height: canvas.height
-    //   },
-    //   {
-    //     path: simulation,
-    //     laserPosition: V.new(0, 0),
-    //     time: 0
-    //   }
-    // );
+    animationHandler.setFrameData(simulation, V.new(0, 0), 0);
+  } else if (lastAction === CHANGE_ANIMATION) {
+    if (animation === "play") {
+      animationHandler.play();
+    } else if (animation === "pause") {
+      animationHandler.pause();
+    } else if (animation === "stop") {
+      animationHandler.stop();
+    }
   }
+
   idSelect("loader").style.visibility = "hidden";
 };
 

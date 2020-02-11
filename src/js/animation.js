@@ -72,24 +72,74 @@ const nextFrameData = (pastFrameData, ellapsedTIme) => {
   };
 };
 
-/**
- * @param {RenderingContext} context
- * @param {FrameData} frameData
- */
-const renderLoop = (context, frameData, timeBefore) => timeNow => {
-  clearFrame(context);
-  renderFrame(context, frameData);
-  const newFrameData = nextFrameData(
-    frameData,
-    (timeNow - (timeBefore || timeNow)) / 1000
-  );
-  window.requestAnimationFrame(renderLoop(context, newFrameData, timeNow));
-};
+// /**
+//  * @param {RenderingContext} context
+//  * @param {FrameData} frameData
+//  */
+// const renderLoop = (context, frameData, timeBefore) => timeNow => {
+//   clearFrame(context);
+//   renderFrame(context, frameData);
+//   const newFrameData = nextFrameData(frameData, (timeNow - (timeBefore || timeNow)) / 1000);
+//   window.requestAnimationFrame(renderLoop(context, newFrameData, timeNow));
+// };
 
-/**
- * @param {RenderingContext} context
- * @param {FrameData} frameData
- */
-export const draw = (context, frameData) => {
-  window.requestAnimationFrame(renderLoop(context, frameData, null));
-};
+// /**
+//  * @param {RenderingContext} context
+//  * @param {FrameData} frameData
+//  */
+// export const draw = (context, frameData) => {
+//   window.requestAnimationFrame(renderLoop(context, frameData, null));
+// };
+
+export function AnimationHandler() {
+  var requestID, timeLast;
+  /**
+   * @type {RenderingContext}
+   */
+  var mContext;
+  /**
+   * @type {FrameData}
+   */
+  var mFrameData;
+
+  const renderLoop = timeNow => {
+    clearFrame(mContext);
+    renderFrame(mContext, mFrameData);
+    mFrameData = nextFrameData(mFrameData, (timeNow - (timeLast || timeNow)) / 1000);
+    timeLast = timeNow;
+    requestID = window.requestAnimationFrame(renderLoop);
+  };
+
+  return {
+    /**
+     * @param {CanvasRenderingContext2D} context
+     * @param {number} width
+     * @param {number} height
+     */
+    setContext: (context, width, height) => {
+      mContext = { context, width, height };
+    },
+    /**
+     * @param {SimulatorOutputPath} path
+     * @param {Vector} laserPosition
+     * @param {number} time
+     */
+    setFrameData: (path, laserPosition, time) => {
+      mFrameData = { path, laserPosition, time };
+    },
+    play: () => {
+      console.log("play");
+      if (mContext && mFrameData) requestID = window.requestAnimationFrame(renderLoop);
+    },
+    pause: () => {
+      console.log("pause");
+      window.cancelAnimationFrame(requestID);
+      timeLast = null;
+    },
+    stop: () => {
+      console.log("stop");
+    }
+  };
+}
+
+const animationHandler = AnimationHandler();
