@@ -82,9 +82,6 @@ const getPathFromSVGGeomentryElements = (elements, settings) => {
   }, []);
 };
 
-
-
-
 // ACTIONS TYPES
 
 const CHANGE_SETTING = "CHANGE_SETTING";
@@ -147,36 +144,25 @@ const appReducer = combineReducers({ settings: settingsReducer, path: pathReduce
 
 const store = createStore(appReducer);
 
-let previousState = store.getState();
-
 const handleChange = () => {
-  const newState = store.getState();
+  const { settings, path } = store.getState();
 
-  const getSettings = R.prop("settings");
-  const getSetting = R.curry((obj, setting) => R.pipe(getSettings, R.prop(setting))(obj));
-  const getNewSetting = getSetting(newState);
+  if (path.length > 0) {
 
-  const settingsChanged = Object.keys(getSettings(previousState)).filter(
-    key => getSetting(previousState, key) !== getSetting(newState, key)
-  );
-
-  settingsChanged.forEach(setting => setInLocalStorage(setting, getNewSetting(setting)));
-
-  previousState = newState;
+    const simulation = Simulator.simulate(path, settings, V.new(0,0));
+  }
 };
 
 store.subscribe(handleChange);
 
 // SETTINGS CHANGED DISPATCHER
 
-const onSettingChanged = e => e => store.dispatch(changeSetting(e.target.id, e.target.value));
+const onSettingChanged = e => {
+  setInLocalStorage(e.target.id, e.target.value);
+  store.dispatch(changeSetting(e.target.id, e.target.value));
+};
 
-settingsList.map(
-  R.pipe(
-    getElementById,
-    addOnChangeEventListener(onSettingChanged)
-  )
-);
+settingsList.map(R.pipe(getElementById, addOnChangeEventListener(onSettingChanged)));
 
 // FILE UPLOAD DISPATCHER
 
@@ -197,99 +183,7 @@ const onFileUpload = async e => {
 
   svgElement.remove();
 
-  dispatchEvent(changePath(path));
+  store.dispatch(changePath(path));
 };
 
 getElementByIdAndApply(addOnChangeEventListener(onFileUpload), fileUploadInputId);
-
-
-
-
-
-// ---
-
-// const SimulationEvent = new CustomEvent("simulation", {
-//   detail: { simulationResult: () => getSimulation() }
-// });
-
-// const simulationHandler = () => {
-//   var mPath, mSettings;
-
-//   return R.curry((path, settings) => {
-//     if (!mPath || path) mPath = path;
-//     if (!mSettings || settings) mSettings = settings;
-
-//     if (!mPath || !mSettings) return null;
-
-//     // return Simulator.simulate(path, settings);
-//     return 123;
-//   });
-// };
-
-// const getSimulation = simulationHandler();
-// const updateSimulationFromNewSettings = getSimulation(null);
-// const updateSimulationFromNewFile = getSimulation(R.__, null);
-
-// const onNewSimulation = simulationResult => {
-//   if (simulationResult) console.log("A new simulation!");
-// };
-
-// // SETTINGS
-
-// const settingsList = Object.freeze(Simulator.settingsList());
-
-// const loadSettings = settingsList => {
-//   R.map(
-//     getElementByIdAndApply(element => {
-//       setValueImpure("value", getFromLocalStorage(element.id) || element.value, element);
-//     }),
-//     settingsList
-//   );
-
-//   return () => {
-//     return R.zipObj(settingsList, R.map(getElementByIdAndApply(R.prop("value")), settingsList));
-//   };
-// };
-
-// const getSettings = loadSettings(settingsList);
-
-// const onSettingChanged = e => {
-//   const { id, value } = e.target;
-//   setInLocalStorage(id, value);
-//   const updatedSettings = getSettings();
-//   const simulationResult = updateSimulationFromNewSettings(updatedSettings);
-//   onNewSimulation(simulationResult);
-// };
-
-// const setupSettings = settingsList =>
-//   R.map(getElementByIdAndApply(addOnChangeEventListener(onSettingChanged)), settingsList);
-
-// setupSettings(settingsList);
-
-// // ---
-
-// // File
-
-// const fileUploadInputId = "file-upload";
-
-// const onFileUpload = e => {
-//   console.log(e.target.files[0]);
-//   // Get path from file
-//   var path = [1, 2, 3];
-//   const simulationResult = updateSimulationFromNewFile(path);
-//   e.target.dispatchEvent(SimulationEvent);
-//   onNewSimulation(simulationResult);
-// };
-
-// const setupFileHandling = fileUploadInputId => {
-//   getElementByIdAndApply(addOnChangeEventListener(onFileUpload), fileUploadInputId);
-// };
-
-// setupFileHandling(fileUploadInputId);
-
-// // Display
-
-// getElementByIdAndApply(
-//   addEventListener("simulation", () => console.log("Simulation event")),
-//   "time-estimation"
-// );
