@@ -21,19 +21,27 @@ import { isZero, approxGreateOrEqual } from "./utils";
  * */
 
 /**
- * @typedef {Object} SimulatorInputPath
+ * @typedef {Object} SimulatorInputPoint
  * @property {Vector} position
  * @property {number} desiredSpeed
  */
 
 /**
- * @typedef {Object} SimulatorOutputPath
+ * @typedef {SimulatorInputPoint[]} SimulatorInputPath
+ */
+
+/**
+ * @typedef {Object} SimulatorOutputPoint
  * @property {Vector} start
  * @property {Vector} target
  * @property {Vector} direction
  * @property {number} speed
  * @property {number} acceleration
  * @property {number} time
+ */
+
+/**
+ * @typedef {SimulatorOutputPoint[]} SimulatorOutputPath
  */
 
 /// --- TYPEDEFS end

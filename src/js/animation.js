@@ -28,71 +28,7 @@ import { getPositionFromTime } from "./simulator";
 
 /// --- TYPEDEFS end
 
-/**
- * @param {RenderingContext} context
- */
-const clearFrame = context => {
-  context.context.clearRect(0, 0, context.width, context.height);
-};
-
-/**
- * @param {RenderingContext} context
- * @param {FrameData} frameData
- */
-const renderFrame = (context, frameData) => {
-  const ctx = context.context;
-  const { path, laserPosition } = frameData;
-
-  ctx.beginPath();
-  ctx.moveTo(path[0].start.x, path[0].start.y);
-  path.forEach(p => ctx.lineTo(p.target.x, p.target.y));
-  ctx.strokeStyle = "black";
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.ellipse(laserPosition.x, laserPosition.y, 5, 5, 0, 0, 2 * Math.PI);
-  ctx.strokeStyle = "red";
-  ctx.stroke();
-};
-
-/**
- * @param {FrameData} pastFrameData
- * @param {number} ellapsedTIme
- */
-const nextFrameData = (pastFrameData, ellapsedTIme) => {
-  const path = pastFrameData.path;
-  const time = pastFrameData.time + ellapsedTIme;
-
-  const laserPosition = getPositionFromTime(path, time);
-
-  return {
-    path,
-    laserPosition,
-    time
-  };
-};
-
-// /**
-//  * @param {RenderingContext} context
-//  * @param {FrameData} frameData
-//  */
-// const renderLoop = (context, frameData, timeBefore) => timeNow => {
-//   clearFrame(context);
-//   renderFrame(context, frameData);
-//   const newFrameData = nextFrameData(frameData, (timeNow - (timeBefore || timeNow)) / 1000);
-//   window.requestAnimationFrame(renderLoop(context, newFrameData, timeNow));
-// };
-
-// /**
-//  * @param {RenderingContext} context
-//  * @param {FrameData} frameData
-//  */
-// export const draw = (context, frameData) => {
-//   window.requestAnimationFrame(renderLoop(context, frameData, null));
-// };
-
 export function AnimationHandler() {
-  var requestID, timeLast;
   /**
    * @type {RenderingContext}
    */
@@ -102,12 +38,78 @@ export function AnimationHandler() {
    */
   var mFrameData;
 
+  var timeLast = null;
+  var isPlaying = false,
+    willStop = false;
+
+  /**
+   * @param {RenderingContext} context
+   */
+  const clearFrame = context => {
+    context.context.clearRect(0, 0, context.width, context.height);
+  };
+
+  /**
+   * @param {RenderingContext} context
+   * @param {FrameData} frameData
+   */
+  const renderFrame = (context, frameData) => {
+    const ctx = context.context;
+    const { path, laserPosition } = frameData;
+
+    ctx.beginPath();
+    ctx.moveTo(path[0].start.x, path[0].start.y);
+    path.forEach(p => ctx.lineTo(p.target.x, p.target.y));
+    ctx.strokeStyle = "black";
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(laserPosition.x, laserPosition.y, 5, 5, 0, 0, 2 * Math.PI);
+    ctx.strokeStyle = "red";
+    ctx.stroke();
+  };
+
+  /**
+   * @param {FrameData} pastFrameData
+   * @param {number} ellapsedTIme
+   */
+  const nextFrameData = (pastFrameData, ellapsedTIme) => {
+    const path = pastFrameData.path;
+    const time = pastFrameData.time + ellapsedTIme;
+
+    const laserPosition = getPositionFromTime(path, time);
+
+    return {
+      path,
+      laserPosition,
+      time
+    };
+  };
+
   const renderLoop = timeNow => {
-    clearFrame(mContext);
-    renderFrame(mContext, mFrameData);
     mFrameData = nextFrameData(mFrameData, (timeNow - (timeLast || timeNow)) / 1000);
+
+    clearFrame(mContext);
+
+    renderFrame(mContext, mFrameData);
+
     timeLast = timeNow;
-    requestID = window.requestAnimationFrame(renderLoop);
+
+    if (mFrameData.time >= mFrameData.path[mFrameData.path.length - 1].time) {
+      mFrameData.time = 0;
+      isPlaying = false;
+      timeLast = null;
+    }
+
+    if (isPlaying) {
+      if (willStop) {
+        isPlaying = false;
+        willStop = false;
+      }
+      window.requestAnimationFrame(renderLoop);
+    } else {
+      timeLast = null;
+    }
   };
 
   return {
@@ -128,18 +130,29 @@ export function AnimationHandler() {
       mFrameData = { path, laserPosition, time };
     },
     play: () => {
-      console.log("play");
-      if (mContext && mFrameData) requestID = window.requestAnimationFrame(renderLoop);
+      if (mContext && mFrameData) {
+        isPlaying = true;
+        renderLoop(performance.now());
+      }
     },
     pause: () => {
-      console.log("pause");
-      window.cancelAnimationFrame(requestID);
-      timeLast = null;
+      isPlaying = false;
     },
     stop: () => {
-      console.log("stop");
+      if (mContext && mFrameData) {
+        mFrameData.time = 0;
+        willStop = isPlaying;
+        if (!isPlaying) {
+          renderLoop(performance.now());
+        }
+      }
+    },
+    oneFrame: time => {
+      if (mContext && mFrameData) {
+        isPlaying = false;
+        mFrameData.time = time;
+        renderLoop(performance.now());
+      }
     }
   };
 }
-
-const animationHandler = AnimationHandler();

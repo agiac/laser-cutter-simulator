@@ -93,8 +93,6 @@ animationHandler.setContext(canvas.getContext("2d"), canvas.width, canvas.height
 const handleChange = () => {
   const { settings, path, animation, lastAction } = store.getState();
 
-  console.log(lastAction);
-
   if (lastAction === CHANGE_PATH || (lastAction === CHANGE_SETTING && path.length > 0)) {
     const simulation = Simulator.simulate(path, settings, V.new(0, 0));
     const timeEstimation = Simulator.timeEstimation(simulation);
@@ -104,6 +102,7 @@ const handleChange = () => {
     document.getElementById("time-estimation").innerText = formatSeconds(timeEstimation);
 
     animationHandler.setFrameData(simulation, V.new(0, 0), 0);
+    animationHandler.oneFrame(0);
   } else if (lastAction === CHANGE_ANIMATION) {
     if (animation === "play") {
       animationHandler.play();
@@ -134,6 +133,8 @@ const fileUploadInputId = "file-upload";
 
 const onFileUpload = e => {
   const svgFile = e.target.files[0];
+  
+  if (!svgFile) return;
 
   idSelect("time-estimation").innerText = "--- min.";
   idSelect("loader").style.visibility = "visible";
