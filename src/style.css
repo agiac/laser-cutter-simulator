@@ -37,13 +37,31 @@ label {
   width: var(--column-width);
   display: flex;
   align-items: center;
-  margin: 4px;
-  margin-left: 0;
+  margin: 0;
+}
+
+label p {
+  width: 110px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  margin-right: 12px;
 }
 
 input {
-  width: 100px;
+  /* width: 60px; */
   margin-left: auto;
+  /* flex: auto; */
+  /* max-width: 50px; */
+  width: 60px;
+}
+
+.units {
+  font-size: small;
+  color: gray;
+  margin-left: 5px;
+  width: 50px;
+  /* width: 10px; */
+  /* flex: auto; */
 }
 
 .settings h5 {

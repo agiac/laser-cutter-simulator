@@ -16,42 +16,50 @@
     <div class="settings-section">
       <h3>Machine settings:</h3>
       <label title="mm/s">
-        Maximum speed X:
+        <p>Maximum speed X:</p>
         <input id="maximumSpeedX" type="number" min="1" />
+        <span class="units">mm/s</span>
       </label>
       <label title="mm/s">
-        Maximum speed Y:
+        <p>Maximum speed Y:</p>
         <input id="maximumSpeedY" type="number" min="1" />
+        <span class="units">mm/s</span>
       </label>
       <label title="mm/s^2">
-        Acceleration X:
+        <p>Acceleration X:</p>
         <input id="accelerationX" type="number" min="1" />
+        <span class="units">mm/s^2</span>
       </label>
       <label title="mm/s^2">
-        Acceleration Y:
+        <p>Acceleration Y:</p>
         <input id="accelerationY" type="number" min="1" />
+        <span class="units">mm/s^2</span>
       </label>
       <h5>Advanced</h5>
       <div class="advanced">
         <label title="mm/s">
-          Minimum junction speed:
+          <p>Minimum junction speed:</p>
           <input id="minimumJunctionSpeed" type="number" min="0" step="0.1" />
+          <span class="units">mm/s</span>
         </label>
         <label title="mm">
-          Junction deviation:
+          <p>Junction deviation:</p>
           <input id="junctionDeviation" type="number" min="0" step="0.01" />
+          <span class="units">mm</span>
         </label>
       </div>
     </div class="settings-section">
     <div class="settings-section">
       <h3>G-code settings:</h3>
       <label title="mm/s">
-        Cutting speed:
+        <p>Cutting speed:</p>
         <input id="cuttingSpeed" type="number" min="1" />
+        <span class="units">mm/s</span>
       </label>
       <label title="mm/s">
-        Travel speed:
+        <p>Travel speed:</p>
         <input id="travelSpeed" type="number" min="1" />
+        <span class="units">mm/s</span>
       </label>
       <!-- <label>
           Engraving speed:
@@ -62,12 +70,14 @@
       <h3>File:</h3>
       <input type="file" id="file-upload" id="file-upload" accept=".svg" />
       <label title="mm">
-        Width
+        <p>Width</p>
         <input id="file-width" type="number" min="1" />
+        <span class="units">mm</span>
       </label>
       <label title="mm">
-        Height
+        <p>Height</p>
         <input id="file-width" type="number" min="1" />
+        <span class="units">mm</span>
       </label>
     </div>
   </section>
