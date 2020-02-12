@@ -9,7 +9,7 @@ import {
   setInLocalStorage,
   pathFromSvgFile
 } from "./utils";
-import { AnimationHandler, draw } from "./animation";
+import { AnimationHandler } from "./animation";
 
 // ACTIONS TYPES
 
@@ -41,6 +41,7 @@ Object.entries(initialSettingsState).forEach(
   ([setting, value]) => (idSelect(setting).value = value)
 );
 const settingsList = R.keys(initialSettingsState);
+const laserStartingPosition = V.new(10,10);
 
 const settingsReducer = (state = initialSettingsState, action) => {
   switch (action.type) {
@@ -88,20 +89,26 @@ const animationHandler = AnimationHandler();
 
 const canvas = idSelect("canvas");
 
+window.onresize = () => {
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+  animationHandler.oneFrame(0);
+};
+
 animationHandler.setContext(canvas.getContext("2d"), canvas.width, canvas.height);
 
 const handleChange = () => {
   const { settings, path, animation, lastAction } = store.getState();
 
   if (lastAction === CHANGE_PATH || (lastAction === CHANGE_SETTING && path.length > 0)) {
-    const simulation = Simulator.simulate(path, settings, V.new(0, 0));
+    const simulation = Simulator.simulate(path, settings, laserStartingPosition);
     const timeEstimation = Simulator.timeEstimation(simulation);
 
     const formatSeconds = seconds =>
       `${parseInt(seconds / 60)} min. ${parseInt(seconds % 60)} sec.`;
     document.getElementById("time-estimation").innerText = formatSeconds(timeEstimation);
 
-    animationHandler.setFrameData(simulation, V.new(0, 0), 0);
+    animationHandler.setFrameData(simulation, laserStartingPosition, 0);
     animationHandler.oneFrame(0);
   } else if (lastAction === CHANGE_ANIMATION) {
     if (animation === "play") {
@@ -133,7 +140,7 @@ const fileUploadInputId = "file-upload";
 
 const onFileUpload = e => {
   const svgFile = e.target.files[0];
-  
+
   if (!svgFile) return;
 
   idSelect("time-estimation").innerText = "--- min.";

@@ -97,14 +97,16 @@ function calculateMaximumJunctionSpeeds(path, settings, start) {
     const maxJunctionSpeed = isZero(calculateMaxJunctionSpeed(p1.sub(p0), p2.sub(p1), settings));
     result.push({
       position: p1,
-      maxJunctionSpeed
+      maxJunctionSpeed,
+      type: path[i].type
     });
     p0 = p1;
   }
 
   result.push({
     position: path[path.length - 1].position,
-    maxJunctionSpeed: 0
+    maxJunctionSpeed: 0,
+    type: path[path.length - 1].type,
   });
 
   return result;
@@ -154,11 +156,12 @@ function calculateMaxSpeedToReachTargetSpeed(startPosition, targetPosition, targ
   return targetSpeed + speedIncrease;
 }
 
-function junctionSpeedPoint(position, finalSpeed, maxSpeed) {
+function junctionSpeedPoint(position, finalSpeed, maxSpeed, type) {
   return {
     position,
     finalSpeed,
-    maxSpeed
+    maxSpeed,
+    type
   };
 }
 
@@ -171,7 +174,8 @@ function calculateJunctionSpeeds(path, settings, start) {
     junctionSpeedPoint(
       maxJunctionSpeeds[maxJunctionSpeeds.length - 1].position,
       maxJunctionSpeeds[maxJunctionSpeeds.length - 1].maxJunctionSpeed,
-      path[path.length - 1].desiredSpeed
+      path[path.length - 1].desiredSpeed,
+      maxJunctionSpeeds[maxJunctionSpeeds.length - 1].type
     )
   );
 
@@ -198,7 +202,9 @@ function calculateJunctionSpeeds(path, settings, start) {
         settings
       )
     ) {
-      junctionSpeeds.push(junctionSpeedPoint(current.position, desiredFinalSpeed, maxSpeed));
+      junctionSpeeds.push(
+        junctionSpeedPoint(current.position, desiredFinalSpeed, maxSpeed, current.type)
+      );
     } else if (desiredFinalSpeed >= next.finalSpeed) {
       const maxSpeedToReachTargetSpeed = calculateMaxSpeedToReachTargetSpeed(
         current.position,
@@ -208,7 +214,7 @@ function calculateJunctionSpeeds(path, settings, start) {
       );
 
       junctionSpeeds.push(
-        junctionSpeedPoint(current.position, maxSpeedToReachTargetSpeed, maxSpeed)
+        junctionSpeedPoint(current.position, maxSpeedToReachTargetSpeed, maxSpeed, current.type)
       );
     } else {
       //TODO Recalc previous points speed
@@ -216,7 +222,7 @@ function calculateJunctionSpeeds(path, settings, start) {
 
       junctionSpeeds.push(
         // ===> This is wrong!
-        junctionSpeedPoint(current.position, desiredFinalSpeed, maxSpeed)
+        junctionSpeedPoint(current.position, desiredFinalSpeed, maxSpeed, current.type)
       );
     }
   }
@@ -224,7 +230,7 @@ function calculateJunctionSpeeds(path, settings, start) {
   return junctionSpeeds.reverse();
 }
 
-function speedPoint(start, target, speed, targetSpeed, acceleration, startTime) {
+function speedPoint(start, target, speed, targetSpeed, acceleration, startTime, type) {
   const direction = target.sub(start).unit();
   const time = (2 * target.sub(start).mag()) / (speed + targetSpeed);
 
@@ -241,11 +247,14 @@ function speedPoint(start, target, speed, targetSpeed, acceleration, startTime) 
     direction,
     speed,
     acceleration,
-    time: startTime + time
+    time: startTime + time,
+    type
   };
 }
 
 function planSegment(start, target, settings, startTime) {
+  const type = target.type;
+  console.log(type)
   const startToTarget = target.position.sub(start.position);
   const directionToTarget = startToTarget.unit();
 
@@ -275,7 +284,8 @@ function planSegment(start, target, settings, startTime) {
       start.speed,
       speedToTarget,
       accelerationToTarget,
-      startTime
+      startTime,
+      type
     );
     point2 = speedPoint(
       point2Position,
@@ -283,7 +293,8 @@ function planSegment(start, target, settings, startTime) {
       speedToTarget,
       speedToTarget,
       0,
-      point1.time
+      point1.time,
+      type
     );
     point3 = speedPoint(
       point3Position,
@@ -291,7 +302,8 @@ function planSegment(start, target, settings, startTime) {
       speedToTarget,
       target.finalSpeed,
       -accelerationToTarget,
-      point2.time
+      point2.time,
+      type
     );
 
     return [point1, point2, point3];
@@ -312,7 +324,8 @@ function planSegment(start, target, settings, startTime) {
         start.speed,
         target.finalSpeed,
         start.speed > target.finalSpeed ? -1 : 1 * accelerationToTarget,
-        startTime
+        startTime,
+        type
       );
       return [point1];
     } else {
@@ -322,7 +335,8 @@ function planSegment(start, target, settings, startTime) {
         start.speed,
         point2Speed,
         accelerationToTarget,
-        startTime
+        startTime,
+        type
       );
       point2 = speedPoint(
         point2Position,
@@ -330,7 +344,8 @@ function planSegment(start, target, settings, startTime) {
         point2Speed,
         target.finalSpeed,
         -accelerationToTarget,
-        point1.time
+        point1.time,
+        type
       );
       return [point1, point2];
     }

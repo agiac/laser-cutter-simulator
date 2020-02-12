@@ -99,7 +99,7 @@ function getPathFromSVGGeomentryElements(elements, settings) {
   const minX = Math.min(...allX);
   const minY = Math.min(...allY);
   const corneredSvgPaths = svgPaths.map(path =>
-    path.map(p => ({ x: p.x - minX + 10, y: p.y - minY + 10 }))
+    path.map(p => ({ x: p.x - minX + 11, y: p.y - minY + 11 }))
   );
 
   return corneredSvgPaths.reduce((result, path) => {
@@ -109,12 +109,14 @@ function getPathFromSVGGeomentryElements(elements, settings) {
         if (index === 0) {
           return {
             position: V.new(x, y),
-            desiredSpeed: settings.travelSpeed
+            desiredSpeed: settings.travelSpeed,
+            type: 'travel'
           };
         } else {
           return {
             position: V.new(x, y),
-            desiredSpeed: settings.cuttingSpeed
+            desiredSpeed: settings.cuttingSpeed,
+            type: 'cut'
           };
         }
       })

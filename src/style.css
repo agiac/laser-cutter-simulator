@@ -23,6 +23,12 @@ body {
   flex-wrap: wrap;
 }
 
+section {
+  background-color: #fafafa;
+  padding: 20px;
+  border-radius: 20px;
+}
+
 .settings-section {
   margin-right: 24px;
 }
@@ -58,6 +64,7 @@ input {
 
 #file-upload {
   width: var(--column-width);
+  margin-bottom: 12px;
 }
 
 .time-estimation-section {
@@ -90,9 +97,11 @@ input {
 canvas {
   width: 100%;
   max-width: var(--max-width);
-  height: 800px;
+  height: 400px;
   background-color: #fafafa;
   margin-top: 24px;
+  padding: 20px;
+  border-radius: 20px;
 }
 
 .loader {
