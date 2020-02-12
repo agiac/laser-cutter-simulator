@@ -8,12 +8,12 @@ body {
   margin: 5%;
 }
 
-.title,
+/* .title,
 .results,
 .time-estimation-section {
   width: 100%;
   max-width: var(--max-width);
-}
+} */
 
 .settings {
   flex: auto;
@@ -25,12 +25,23 @@ body {
 
 section {
   background-color: #fafafa;
-  padding: 20px;
   border-radius: 20px;
+  width: 100%;
+  margin-top: 12px;
+  display: flex;
+  max-width: var(--max-width);
+}
+
+section > * {
+  margin: 20px;
 }
 
 .settings-section {
-  margin-right: 24px;
+  margin-right: 12px;
+}
+
+.settings-section .material-icons {
+  font-size: medium;
 }
 
 label {
@@ -48,10 +59,7 @@ label p {
 }
 
 input {
-  /* width: 60px; */
   margin-left: auto;
-  /* flex: auto; */
-  /* max-width: 50px; */
   width: 60px;
 }
 
@@ -60,8 +68,6 @@ input {
   color: gray;
   margin-left: 5px;
   width: 50px;
-  /* width: 10px; */
-  /* flex: auto; */
 }
 
 .settings h5 {
@@ -70,9 +76,6 @@ input {
 
 .advanced {
   margin-left: 12px;
-  /* max-height: 0px;
-  overflow: hidden;
-  transition: max-height .25s ease-in-out; */
 }
 
 .advanced label {
@@ -86,9 +89,8 @@ input {
 }
 
 .time-estimation-section {
-  display: flex;
+  /* display: flex; */
   color: cornflowerblue;
-  margin-top: 16px;
 }
 
 .time-estimation-section h2 {
@@ -99,7 +101,6 @@ input {
   display: flex;
   width: 100%;
   max-width: var(--max-width);
-  margin-top: 24px;
 }
 
 .animation-cotrollers .material-icons {
@@ -110,16 +111,26 @@ input {
 .material-icons:hover {
   transform: scale(1.2);
   color: cornflowerblue;
+  cursor: pointer;
+}
+
+.locked-proportion {
+  position: relative;
+  height: 20px;
+  margin-left: 12px;
+}
+
+.locked-proportion > i {
+  position: absolute;
 }
 
 canvas {
-  width: 100%;
-  max-width: var(--max-width);
   height: 400px;
-  background-color: #fafafa;
-  margin-top: 24px;
-  padding: 20px;
-  border-radius: 20px;
+  background-color: #f6edd4;
+  width: 100%;
+  width: -moz-available;
+  width: -webkit-fill-available;
+  width: fill-available;
 }
 
 .loader {

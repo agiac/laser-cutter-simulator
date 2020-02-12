@@ -61,10 +61,6 @@
         <input id="travelSpeed" type="number" min="1" />
         <span class="units">mm/s</span>
       </label>
-      <!-- <label>
-          Engraving speed:
-          <input id="engravingSpeed" type="number" min="1"/>
-        </label> -->
     </div>
     <div class="settings-section">
       <h3>File:</h3>
@@ -74,6 +70,10 @@
         <input id="file-width" type="number" min="1" />
         <span class="units">mm</span>
       </label>
+      <div class="locked-proportion">
+        <i id="lock-on" class="material-icons">lock</i>
+        <i id="lock-off" class="material-icons" style="visibility: hidden;">lock_open</i>
+      </div>
       <label title="mm">
         <p>Height</p>
         <input id="file-height" type="number" min="1" />
@@ -90,7 +90,9 @@
     <i id="pause" class="material-icons">pause</i>
     <i id="stop" class="material-icons">stop</i>
   </section >
-  <canvas id="canvas"></canvas>
+  <section>
+    <canvas id="canvas"></canvas>
+  </section>
   <div id="loader" class="loader">Loading...<div></div>
   </div>
   <script>

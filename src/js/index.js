@@ -25,9 +25,9 @@ const changeSetting = (setting, value) => ({
   change: { setting, value }
 });
 
-const changePath = (svgPath, path, width, height) => ({
+const changePath = (svgPath, path, width, height, locked) => ({
   type: CHANGE_PATH,
-  path: { svgPath, path, width, height }
+  path: { svgPath, path, width, height, locked }
 });
 
 const changeAnimation = animation => ({
@@ -53,7 +53,7 @@ const settingsReducer = (state = initialSettingsState, action) => {
   }
 };
 
-const pathReducer = (state = [], action) => {
+const pathReducer = (state = { locked: true }, action) => {
   switch (action.type) {
     case CHANGE_PATH:
       return action.path;
@@ -101,7 +101,7 @@ animationHandler.setContext(canvas.getContext("2d"), canvas.width, canvas.height
 const handleChange = () => {
   const { settings, path, animation, lastAction } = store.getState();
 
-  if (lastAction === CHANGE_PATH || (lastAction === CHANGE_SETTING && path.length > 0)) {
+  if ((lastAction === CHANGE_PATH || lastAction === CHANGE_SETTING) && path.path) {
     const simulation = Simulator.simulate(path.path, settings, laserStartingPosition);
     const timeEstimation = Simulator.timeEstimation(simulation);
 
@@ -155,25 +155,54 @@ const onFileUpload = e => {
       svgFile,
       store.getState().settings
     );
-    store.dispatch(changePath(svgPath, path, width, height));
+    store.dispatch(changePath(svgPath, path, width, height, store.getState().path.locked));
   }, 50);
 };
 
 R.pipe(idSelect, addOnChangeEventListener(onFileUpload))(fileUploadInputId);
 
 const onWidthOrHeightChange = e => {
-  const { path : { svgPath, path, width, height }, settings } = store.getState();
+  const {
+    path: { svgPath, width, height, locked },
+    settings
+  } = store.getState();
 
-  const newWidth = e.target.id === "file-width" ? parseFloat(e.target.value) : width;
-  const newHeight = e.target.id === "file-height" ? parseFloat(e.target.value) : height;
+  const newWidth =
+    e.target.id === "file-width"
+      ? parseFloat(e.target.value)
+      : locked
+      ? (e.target.value / height) * width
+      : width;
+  const newHeight =
+    e.target.id === "file-height"
+      ? parseFloat(e.target.value)
+      : locked
+      ? (e.target.value / width) * height
+      : height;
 
   const [newPath] = pathFromSVGpath(svgPath, settings, newWidth, newHeight);
 
-  store.dispatch(changePath(svgPath, newPath, newWidth, newHeight));
+  store.dispatch(changePath(svgPath, newPath, newWidth, newHeight, locked));
 };
 
 const fileWidthAndHeightSettings = ["file-width", "file-height"];
 fileWidthAndHeightSettings.map(R.pipe(idSelect, addOnChangeEventListener(onWidthOrHeightChange)));
+
+const onLockClicked = () => {
+  const {
+    path: { svgPath, path, width, height, locked }
+  } = store.getState();
+
+  const newLocked = !locked;
+
+  idSelect("lock-on").style.visibility = newLocked ? "visible" : "hidden";
+  idSelect("lock-off").style.visibility = newLocked ? "hidden" : "visible";
+
+  store.dispatch(changePath(svgPath, path, width, height, newLocked));
+};
+
+const lockProportionsSetting = ["lock-on", "lock-off"];
+lockProportionsSetting.map(R.pipe(idSelect, addOnClickEventListener(onLockClicked)));
 
 // ANIMATION DISPATCHER
 

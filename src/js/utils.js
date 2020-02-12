@@ -81,8 +81,32 @@ function getSVGGeometryElements(children) {
   return result;
 }
 
+function sortPaths(paths) {
+  const back = arr => arr[arr.length - 1];
+  const front = arr => arr[0];
+  const sqrDist = (a, b) => Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2);
+
+  const result = [front(paths)];
+  let queue = paths.slice(1, paths.length);
+
+  while (queue.length > 0) {
+    const lastPoint = back(back(result));
+
+    const sortedQueue = queue.sort((a, b) => {
+      const startA = front(a);
+      const startB = front(b);
+      return sqrDist(lastPoint, startA) - sqrDist(lastPoint, startB);
+    });
+
+    result.push(front(sortedQueue));
+    queue = sortedQueue.slice(1, sortedQueue.length);
+  }
+
+  return result;
+}
+
 function getSVGPathFromSVGGeomentryElements(elements) {
-  return elements.map(element => {
+  const rawPaths = elements.map(element => {
     const elementPoints = [];
     const totLength = element.getTotalLength();
     for (var l = 0; l < totLength; l += 2) {
@@ -93,6 +117,7 @@ function getSVGPathFromSVGGeomentryElements(elements) {
     }
     return simplify(elementPoints, 0.5);
   });
+  return sortPaths(rawPaths);
 }
 
 export function pathFromSVGpath(svgPath, settings, setWidth = null, setHeight = null) {
@@ -145,12 +170,7 @@ export async function pathFromSvgFile(svgFile, settings, setWidth = null, setHei
 
     const svgElements = getSVGGeometryElements(svgElement.children);
     const svgPath = getSVGPathFromSVGGeomentryElements(svgElements);
-    const [path, width, height] = pathFromSVGpath(
-      svgPath,
-      settings,
-      setWidth,
-      setHeight
-    );
+    const [path, width, height] = pathFromSVGpath(svgPath, settings, setWidth, setHeight);
 
     svgElement.remove();
 
