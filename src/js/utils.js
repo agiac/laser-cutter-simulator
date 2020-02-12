@@ -81,11 +81,11 @@ function getSVGGeometryElements(children) {
   return result;
 }
 
-function getPathFromSVGGeomentryElements(elements, settings) {
-  const svgPaths = elements.map(element => {
+function getSVGPathFromSVGGeomentryElements(elements) {
+  return elements.map(element => {
     const elementPoints = [];
     const totLength = element.getTotalLength();
-    for (var l = 0; l < totLength; l += 1) {
+    for (var l = 0; l < totLength; l += 2) {
       elementPoints.push({
         x: element.getPointAtLength(l).x,
         y: element.getPointAtLength(l).y
@@ -93,16 +93,24 @@ function getPathFromSVGGeomentryElements(elements, settings) {
     }
     return simplify(elementPoints, 0.5);
   });
+}
 
-  const allX = svgPaths.reduce((res, path) => [...res, ...path.map(p => p.x)], []);
-  const allY = svgPaths.reduce((res, path) => [...res, ...path.map(p => p.y)], []);
+export function pathFromSVGpath(svgPath, settings, setWidth = null, setHeight = null) {
+  const allX = svgPath.reduce((res, path) => [...res, ...path.map(p => p.x)], []);
+  const allY = svgPath.reduce((res, path) => [...res, ...path.map(p => p.y)], []);
   const minX = Math.min(...allX);
   const minY = Math.min(...allY);
-  const corneredSvgPaths = svgPaths.map(path =>
-    path.map(p => ({ x: p.x - minX + 11, y: p.y - minY + 11 }))
+  const maxX = Math.max(...allX);
+  const maxY = Math.max(...allY);
+  const widthX = maxX - minX;
+  const widthY = maxY - minY;
+  const scaleX = setWidth ? setWidth / widthX : 1;
+  const scaleY = setHeight ? setHeight / widthY : 1;
+  const corneredSvgPaths = svgPath.map(path =>
+    path.map(p => ({ x: (p.x - minX) * scaleX + 11, y: (p.y - minY) * scaleY + 11 }))
   );
 
-  return corneredSvgPaths.reduce((result, path) => {
+  const path = corneredSvgPaths.reduce((result, path) => {
     return [
       ...result,
       ...path.map(({ x, y }, index) => {
@@ -110,21 +118,23 @@ function getPathFromSVGGeomentryElements(elements, settings) {
           return {
             position: V.new(x, y),
             desiredSpeed: settings.travelSpeed,
-            type: 'travel'
+            type: "travel"
           };
         } else {
           return {
             position: V.new(x, y),
             desiredSpeed: settings.cuttingSpeed,
-            type: 'cut'
+            type: "cut"
           };
         }
       })
     ];
   }, []);
+
+  return [path, widthX * scaleX, widthY * scaleY];
 }
 
-export async function pathFromSvgFile(svgFile, settings) {
+export async function pathFromSvgFile(svgFile, settings, setWidth = null, setHeight = null) {
   return new Promise(async resolve => {
     const svgText = await svgFile.text();
 
@@ -134,10 +144,16 @@ export async function pathFromSvgFile(svgFile, settings) {
     document.body.append(svgElement);
 
     const svgElements = getSVGGeometryElements(svgElement.children);
-    const path = getPathFromSVGGeomentryElements(svgElements, settings);
+    const svgPath = getSVGPathFromSVGGeomentryElements(svgElements);
+    const [path, width, height] = pathFromSVGpath(
+      svgPath,
+      settings,
+      setWidth,
+      setHeight
+    );
 
     svgElement.remove();
 
-    resolve(path);
+    resolve([svgPath, path, width, height]);
   });
 }

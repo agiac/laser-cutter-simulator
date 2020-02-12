@@ -7,7 +7,8 @@ import {
   addOnChangeEventListener,
   addOnClickEventListener,
   setInLocalStorage,
-  pathFromSvgFile
+  pathFromSvgFile,
+  pathFromSVGpath
 } from "./utils";
 import { AnimationHandler } from "./animation";
 
@@ -24,9 +25,9 @@ const changeSetting = (setting, value) => ({
   change: { setting, value }
 });
 
-const changePath = path => ({
+const changePath = (svgPath, path, width, height) => ({
   type: CHANGE_PATH,
-  path
+  path: { svgPath, path, width, height }
 });
 
 const changeAnimation = animation => ({
@@ -41,7 +42,7 @@ Object.entries(initialSettingsState).forEach(
   ([setting, value]) => (idSelect(setting).value = value)
 );
 const settingsList = R.keys(initialSettingsState);
-const laserStartingPosition = V.new(10,10);
+const laserStartingPosition = V.new(10, 10);
 
 const settingsReducer = (state = initialSettingsState, action) => {
   switch (action.type) {
@@ -101,12 +102,15 @@ const handleChange = () => {
   const { settings, path, animation, lastAction } = store.getState();
 
   if (lastAction === CHANGE_PATH || (lastAction === CHANGE_SETTING && path.length > 0)) {
-    const simulation = Simulator.simulate(path, settings, laserStartingPosition);
+    const simulation = Simulator.simulate(path.path, settings, laserStartingPosition);
     const timeEstimation = Simulator.timeEstimation(simulation);
+
+    idSelect("file-width").value = path.width.toFixed(0);
+    idSelect("file-height").value = path.height.toFixed(0);
 
     const formatSeconds = seconds =>
       `${parseInt(seconds / 60)} min. ${parseInt(seconds % 60)} sec.`;
-    document.getElementById("time-estimation").innerText = formatSeconds(timeEstimation);
+    idSelect("time-estimation").innerText = formatSeconds(timeEstimation);
 
     animationHandler.setFrameData(simulation, laserStartingPosition, 0);
     animationHandler.oneFrame(0);
@@ -147,12 +151,29 @@ const onFileUpload = e => {
   idSelect("loader").style.visibility = "visible";
 
   setTimeout(async () => {
-    const path = await pathFromSvgFile(svgFile, store.getState().settings);
-    store.dispatch(changePath(path));
+    const [svgPath, path, width, height] = await pathFromSvgFile(
+      svgFile,
+      store.getState().settings
+    );
+    store.dispatch(changePath(svgPath, path, width, height));
   }, 50);
 };
 
 R.pipe(idSelect, addOnChangeEventListener(onFileUpload))(fileUploadInputId);
+
+const onWidthOrHeightChange = e => {
+  const { path : { svgPath, path, width, height }, settings } = store.getState();
+
+  const newWidth = e.target.id === "file-width" ? parseFloat(e.target.value) : width;
+  const newHeight = e.target.id === "file-height" ? parseFloat(e.target.value) : height;
+
+  const [newPath] = pathFromSVGpath(svgPath, settings, newWidth, newHeight);
+
+  store.dispatch(changePath(svgPath, newPath, newWidth, newHeight));
+};
+
+const fileWidthAndHeightSettings = ["file-width", "file-height"];
+fileWidthAndHeightSettings.map(R.pipe(idSelect, addOnChangeEventListener(onWidthOrHeightChange)));
 
 // ANIMATION DISPATCHER
 

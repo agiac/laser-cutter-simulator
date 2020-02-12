@@ -254,7 +254,6 @@ function speedPoint(start, target, speed, targetSpeed, acceleration, startTime, 
 
 function planSegment(start, target, settings, startTime) {
   const type = target.type;
-  console.log(type)
   const startToTarget = target.position.sub(start.position);
   const directionToTarget = startToTarget.unit();
 
