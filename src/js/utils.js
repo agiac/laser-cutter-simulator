@@ -1,7 +1,7 @@
 import simplify from "simplify-js";
 import { default as V } from "./vector.js";
 import * as R from "ramda";
-import { async } from "q";
+import { parseSVG, makeAbsolute } from "svg-path-parser";
 
 /**
  * @param {number} n
@@ -219,8 +219,28 @@ function pathFromSVGPolygon(polygon) {
  */
 function pathFromSVGpath(path) {
   const d = path.attributes.d.value;
-  console.log(d);
-  return [];
+
+  const commands = parseSVG(d);
+  makeAbsolute(commands);
+
+  const point = (x, y) => ({ x, y });
+
+  let lastPoint = { x: 0, y: 0 };
+
+  const result = [];
+
+  for (let command of commands) {
+    if (command.command === "moveto" || command.command === "lineto") {
+      lastPoint = point(command.x, command.y);
+    } else if (command.command === "closepath") {
+      lastPoint = result[0];
+    } else {
+      console.log(command);
+    }
+    result.push(lastPoint);
+  }
+
+  return result;
 }
 
 /**

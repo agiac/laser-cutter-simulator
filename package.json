@@ -7,7 +7,8 @@
   "dependencies": {
     "ramda": "^0.27.0",
     "redux": "^4.0.5",
-    "simplify-js": "^1.2.4"
+    "simplify-js": "^1.2.4",
+    "svg-path-parser": "^1.1.0"
   },
   "devDependencies": {
     "cssnano": "^4.1.10",
