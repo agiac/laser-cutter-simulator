@@ -1,6 +1,6 @@
 import * as R from "ramda";
 import * as Simulator from "./simulator";
-import { default as V } from "./vector.js";
+import { default as Vec } from "./vector.js";
 import { combineReducers, createStore } from "redux";
 import {
   idSelect,
@@ -42,7 +42,7 @@ Object.entries(initialSettingsState).forEach(
   ([setting, value]) => (idSelect(setting).value = value)
 );
 const settingsList = R.keys(initialSettingsState);
-const laserStartingPosition = V.new(10, 10);
+const laserStartingPosition = new Vec(10, 10);
 
 const settingsReducer = (state = initialSettingsState, action) => {
   switch (action.type) {
