@@ -1,12 +1,7 @@
 import { isZero, approxGreateOrEqual } from "./utils";
+import Vector from "./vector"
 
 /// TYPEDEFS
-
-/**
- * @typedef {Object} Vector
- * @property {number} x
- * @property {number} y
- */
 
 /**
  * @typedef {Object} SimulatorSettings

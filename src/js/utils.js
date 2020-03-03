@@ -218,7 +218,7 @@ function pathFromSVGPolygon(polygon) {
  * @param {SVGPathElement} path
  */
 function pathFromSVGpath(path) {
-  const d = path.attributes.d.value;
+  const d = path.attributes['d'].value;
 
   const commands = parseSVG(d);
   makeAbsolute(commands);
@@ -231,7 +231,7 @@ function pathFromSVGpath(path) {
 
   for (let command of commands) {
     if (command.command === "moveto" || command.command === "lineto") {
-      lastPoint = point(command.x, command.y);
+      lastPoint = point(command['x'], command['y']);
     } else if (command.command === "closepath") {
       lastPoint = result[0];
     } else {
@@ -251,19 +251,19 @@ function pathFromSVGShapes(shapes) {
   return shapes.map(shape => {
     const is = isElement(R.__, shape);
     if (is("rect")) {
-      return pathFromSVGRect(shape);
+      return pathFromSVGRect(/** @type {SVGRectElement}*/(shape));
     } else if (is("circle")) {
-      return pathFromSVGCircle(shape);
+      return pathFromSVGCircle(/** @type {SVGCircleElement}*/(shape));
     } else if (is("ellipse")) {
-      return pathFromSVGEllipse(shape);
+      return pathFromSVGEllipse(/** @type {SVGEllipseElement}*/(shape));
     } else if (is("line")) {
-      return pathFromSVGLine(shape);
+      return pathFromSVGLine(/** @type {SVGLineElement}*/(shape));
     } else if (is("polyline")) {
-      return pathFromSVGPolyine(shape);
+      return pathFromSVGPolyine(/** @type {SVGPolylineElement}}*/(shape));
     } else if (is("polygon")) {
-      return pathFromSVGPolygon(shape);
+      return pathFromSVGPolygon(/** @type {SVGPolygonElement}*/(shape));
     } else if (is("path")) {
-      return pathFromSVGpath(shape);
+      return pathFromSVGpath(/** @type {any | SVGPathElement}*/(shape));
     } else {
       return [];
     }
@@ -282,9 +282,8 @@ export async function pathFromSvgFile(svgFile, settings, setWidth = null, setHei
     const svgShapes = [
       ...svgElement.querySelectorAll("rect, circle, ellipse, line, polyline, polygon, path")
     ];
-    console.log(svgShapes);
 
-    const svgPath = pathFromSVGShapes(svgShapes);
+    const svgPath = pathFromSVGShapes(/** @type {SVGGeometryElement[]}*/(svgShapes));
 
     // const svgPath = getSVGPathFromSVGGeomentryElements(svgShapes);
     const [path, width, height] = pathFromSVGpaths(svgPath, settings, setWidth, setHeight);
