@@ -58,6 +58,29 @@ export function setInLocalStorage(key, value) {
   localStorage[key] = value;
 }
 
+function getSVGGeometryElements(children) {
+  const result = [];
+
+  const recurseChildren = children => {
+    for (const child of children) {
+      if (child.children.length === 0) {
+        if (
+          typeof child.getTotalLength === "function" &&
+          typeof child.getPointAtLength === "function"
+        ) {
+          result.push(child);
+        }
+      } else {
+        recurseChildren(child.children);
+      }
+    }
+  };
+
+  recurseChildren(children);
+
+  return result;
+}
+
 function sortPaths(paths) {
   const back = arr => arr[arr.length - 1];
   const front = arr => arr[0];
@@ -92,15 +115,14 @@ function getSVGPathFromSVGGeomentryElements(elements) {
         y: element.getPointAtLength(l).y
       });
     }
-    elementPoints.push(elementPoints[0]);
     return simplify(elementPoints, 0.5);
   });
   return sortPaths(rawPaths);
 }
 
-export function pathFromSVGpaths(svgPaths, settings, setWidth = null, setHeight = null) {
-  const allX = svgPaths.reduce((res, path) => [...res, ...path.map(p => p.x)], []);
-  const allY = svgPaths.reduce((res, path) => [...res, ...path.map(p => p.y)], []);
+export function pathFromSVGpath(svgPath, settings, setWidth = null, setHeight = null) {
+  const allX = svgPath.reduce((res, path) => [...res, ...path.map(p => p.x)], []);
+  const allY = svgPath.reduce((res, path) => [...res, ...path.map(p => p.y)], []);
   const minX = Math.min(...allX);
   const minY = Math.min(...allY);
   const maxX = Math.max(...allX);
@@ -109,7 +131,7 @@ export function pathFromSVGpaths(svgPaths, settings, setWidth = null, setHeight 
   const widthY = maxY - minY;
   const scaleX = setWidth ? setWidth / widthX : 1;
   const scaleY = setHeight ? setHeight / widthY : 1;
-  const corneredSvgPaths = svgPaths.map(path =>
+  const corneredSvgPaths = svgPath.map(path =>
     path.map(p => ({ x: (p.x - minX) * scaleX + 11, y: (p.y - minY) * scaleY + 11 }))
   );
 
@@ -137,119 +159,6 @@ export function pathFromSVGpaths(svgPaths, settings, setWidth = null, setHeight 
   return [path, widthX * scaleX, widthY * scaleY];
 }
 
-const getSVGLenghtAttributeValue = R.curry(
-  (attribute, element) => element[attribute].baseVal.value
-);
-const isElement = R.curry((tag, element) => element.tagName === tag);
-
-/**
- *
- * @param {SVGRectElement} rect
- */
-function pathFromSVGRect(rect) {
-  const result = [];
-  const [x, y, w, h, rx, ry] = R.map(getSVGLenghtAttributeValue(R.__, rect), [
-    "x",
-    "y",
-    "width",
-    "height",
-    "rx",
-    "ry"
-  ]);
-
-  result.push({ x: x, y: y });
-  result.push({ x: x + w, y: y });
-  result.push({ x: x + w, y: y + h });
-  result.push({ x: x, y: y + h });
-  result.push({ x: x, y: y });
-
-  return result;
-}
-
-/**
- *
- * @param {SVGCircleElement} circle
- */
-function pathFromSVGCircle(circle) {
-  const result = [];
-  const [cx, cy, r] = R.map(getSVGLenghtAttributeValue(R.__, circle), ["cx", "cy", "r"]);
-  for (let a = 0; a < Math.PI * 2; a += 0.1) {
-    result.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
-  }
-  result.push(result[0]);
-
-  return result;
-}
-
-/**
- *
- * @param {SVGEllipseElement} ellipse
- */
-function pathFromSVGEllipse(ellipse) {
-  return [];
-}
-
-/**
- *
- * @param {SVGLineElement} line
- */
-function pathFromSVGLine(line) {
-  return [];
-}
-
-/**
- *
- * @param {SVGPolylineElement} polyline
- */
-function pathFromSVGPolyine(polyline) {
-  return [];
-}
-
-/**
- *
- * @param {SVGPolygonElement} polygon
- */
-function pathFromSVGPolygon(polygon) {
-  return [];
-}
-
-/**
- *
- * @param {SVGPathElement} path
- */
-function pathFromSVGpath(path) {
-  const d = path.attributes.d.value;
-  console.log(d);
-  return [];
-}
-
-/**
- *
- * @param {SVGGeometryElement[]} shapes
- */
-function pathFromSVGShapes(shapes) {
-  return shapes.map(shape => {
-    const is = isElement(R.__, shape);
-    if (is("rect")) {
-      return pathFromSVGRect(shape);
-    } else if (is("circle")) {
-      return pathFromSVGCircle(shape);
-    } else if (is("ellipse")) {
-      return pathFromSVGEllipse(shape);
-    } else if (is("line")) {
-      return pathFromSVGLine(shape);
-    } else if (is("polyline")) {
-      return pathFromSVGPolyine(shape);
-    } else if (is("polygon")) {
-      return pathFromSVGPolygon(shape);
-    } else if (is("path")) {
-      return pathFromSVGpath(shape);
-    } else {
-      return [];
-    }
-  });
-}
-
 export async function pathFromSvgFile(svgFile, settings, setWidth = null, setHeight = null) {
   return new Promise(async resolve => {
     const svgText = await svgFile.text();
@@ -257,19 +166,13 @@ export async function pathFromSvgFile(svgFile, settings, setWidth = null, setHei
     const parser = new DOMParser();
     const svgDocument = parser.parseFromString(svgText, "image/svg+xml");
     const svgElement = svgDocument.querySelector("svg");
-    //document.body.append(svgElement);
+    document.body.append(svgElement);
 
-    const svgShapes = [
-      ...svgElement.querySelectorAll("rect, circle, ellipse, line, polyline, polygon, path")
-    ];
-    console.log(svgShapes);
+    const svgElements = getSVGGeometryElements(svgElement.children);
+    const svgPath = getSVGPathFromSVGGeomentryElements(svgElements);
+    const [path, width, height] = pathFromSVGpath(svgPath, settings, setWidth, setHeight);
 
-    const svgPath = pathFromSVGShapes(svgShapes);
-
-    // const svgPath = getSVGPathFromSVGGeomentryElements(svgShapes);
-    const [path, width, height] = pathFromSVGpaths(svgPath, settings, setWidth, setHeight);
-
-    //svgElement.remove();
+    svgElement.remove();
 
     resolve([svgPath, path, width, height]);
   });

@@ -8,7 +8,7 @@ import {
   addOnClickEventListener,
   setInLocalStorage,
   pathFromSvgFile,
-  pathFromSVGpaths
+  pathFromSVGpath
 } from "./utils";
 import { AnimationHandler } from "./animation";
 
@@ -180,7 +180,7 @@ const onWidthOrHeightChange = e => {
       ? (e.target.value / width) * height
       : height;
 
-  const [newPath] = pathFromSVGpaths(svgPath, settings, newWidth, newHeight);
+  const [newPath] = pathFromSVGpath(svgPath, settings, newWidth, newHeight);
 
   store.dispatch(changePath(svgPath, newPath, newWidth, newHeight, locked));
 };
