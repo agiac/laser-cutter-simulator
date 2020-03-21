@@ -1,5 +1,5 @@
 import simplify from "simplify-js";
-import { default as Vec } from "./vector.js";
+import { default as V } from "./vector.js";
 import * as R from "ramda";
 import { parseSVG, makeAbsolute } from "svg-path-parser";
 
@@ -119,13 +119,13 @@ export function pathFromSVGpaths(svgPaths, settings, setWidth = null, setHeight 
       ...path.map(({ x, y }, index) => {
         if (index === 0) {
           return {
-            position: new Vec(x, y),
+            position: V.new(x, y),
             desiredSpeed: settings.travelSpeed,
             type: "travel"
           };
         } else {
           return {
-            position: new Vec(x, y),
+            position: V.new(x, y),
             desiredSpeed: settings.cuttingSpeed,
             type: "cut"
           };
