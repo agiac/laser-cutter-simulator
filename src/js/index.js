@@ -22,9 +22,9 @@ const changeSetting = (setting, value) => ({
   change: { setting, value }
 });
 
-const changePath = (svgPath, path, width, height, locked) => ({
+const changePath = (project, width, height, locked) => ({
   type: CHANGE_PATH,
-  path: { svgPath, path, width, height, locked }
+  path: { project, width, height, locked }
 });
 
 const changeAnimation = animation => ({
@@ -48,7 +48,7 @@ const initialSettingsState = {
 };
 
 Object.entries(initialSettingsState).forEach(
-  ([setting, value]) => (/** @type {HTMLInputElement}*/ (idSelect(setting)).value = value.toString())
+  ([setting, value]) => /** @type {HTMLInputElement}*/ (idSelect(setting).value = value.toString())
 );
 const settingsList = R.keys(initialSettingsState);
 
@@ -95,45 +95,43 @@ const appReducer = combineReducers({
 
 const store = createStore(appReducer);
 
-const animationHandler = AnimationHandler();
+// const animationHandler = AnimationHandler();
 
-const canvas = /** @type {HTMLCanvasElement} */ (idSelect("canvas"));
+// const canvas = /** @type {HTMLCanvasElement} */ (idSelect("canvas"));
 
-window.onresize = () => {
-  canvas.width = canvas.clientWidth;
-  canvas.height = canvas.clientHeight;
-  animationHandler.oneFrame(0);
-};
+// window.onresize = () => {
+//   canvas.width = canvas.clientWidth;
+//   canvas.height = canvas.clientHeight;
+//   animationHandler.oneFrame(0);
+// };
 
-animationHandler.setContext(canvas.getContext("2d"), canvas.width, canvas.height);
+// animationHandler.setContext(canvas.getContext("2d"), canvas.width, canvas.height);
 
 const handleChange = () => {
   // @ts-ignore
-  const { settings, path, animation, lastAction } = store.getState();
+  const { settings, animation, lastAction, path } = store.getState();
 
-  if ((lastAction === CHANGE_PATH || lastAction === CHANGE_SETTING) && path.path) {
-    // const simulation = Simulator.simulate(path.path, settings, laserStartingPosition);
-    // const timeEstimation = Simulator.timeEstimation(simulation);
+  if (lastAction === CHANGE_PATH || lastAction === CHANGE_SETTING) {
 
-    const timeEstimation = 521;
+    idSelect("canvas").innerHTML = path.project;
 
-    /** @type {HTMLInputElement} */ (idSelect("project-width")).value = path.width.toFixed(0);
-    /** @type {HTMLInputElement} */ (idSelect("project-height")).value = path.height.toFixed(0);
+    // /** @type {HTMLInputElement} */ (idSelect("project-width")).value = path.width.toFixed(0);
+    // /** @type {HTMLInputElement} */ (idSelect("project-height")).value = path.height.toFixed(0);
 
-    const formatSeconds = seconds =>
-      `${(seconds / 60).toFixed(0)} min. ${(seconds % 60).toFixed(0)} sec.`;
+    // const formatSeconds = seconds =>
+    //   `${(seconds / 60).toFixed(0)} min. ${(seconds % 60).toFixed(0)} sec.`;
 
-    idSelect("time-estimation").innerText = formatSeconds(timeEstimation);
+    // idSelect("time-estimation").innerText = formatSeconds(timeEstimation);
 
     // animationHandler.setFrameData(simulation, laserStartingPosition, 0);
     // animationHandler.oneFrame(0);
   } else if (lastAction === CHANGE_ANIMATION) {
     if (animation === "play") {
-      animationHandler.play();
+      // animationHandler.play();
     } else if (animation === "pause") {
-      animationHandler.pause();
+      // animationHandler.pause();
     } else if (animation === "stop") {
-      animationHandler.stop();
+      // animationHandler.stop();
     }
   }
 
@@ -156,6 +154,10 @@ settingsList.map(R.pipe(idSelect, addOnChangeEventListener(onSettingChanged)));
 const fileUploadInputId = "file-upload";
 
 const onFileUpload = async e => {
+  const {
+    path: { width, height, locked }
+  } = store.getState();
+
   /**@type {File} */
   const file = e.target.files[0];
 
@@ -167,11 +169,17 @@ const onFileUpload = async e => {
   try {
     const text = await file.text();
     const format = file.name.split(".").pop();
+    
+    console.log(format, text);
 
-    const parsed = await sdk.parseFile(text, format);
-    // const simulation = await sdk.analyzeProject(parsed)
-  } catch(error) {
+    const project = await sdk.parseFile(text, format);
 
+    console.log(project)
+
+    store.dispatch(changePath(project, width, height, locked));
+  } catch (error) {
+    console.log(error);
+    idSelect("loader").style.visibility = "hidden";
   }
 
   // setTimeout(async () => {
@@ -223,7 +231,7 @@ const onLockClicked = () => {
   idSelect("lock-on").style.visibility = newLocked ? "visible" : "hidden";
   idSelect("lock-off").style.visibility = newLocked ? "hidden" : "visible";
 
-  store.dispatch(changePath(svgPath, path, width, height, newLocked));
+  // store.dispatch(changePath(svgPath, path, width, height, newLocked));
 };
 
 const lockProportionsSetting = ["lock-on", "lock-off"];
