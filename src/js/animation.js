@@ -1,9 +1,17 @@
-import { getPositionFromTime } from "./simulator";
-
 /// TYPEDEFS
 
 /**
- * @typedef {import("./simulator").SimulatorOutputPath} SimulatorOutputPath
+ * @typedef {Object} SimulatorOutputPoint
+ * @property {Vector} start
+ * @property {Vector} target
+ * @property {Vector} direction
+ * @property {number} speed
+ * @property {number} acceleration
+ * @property {number} time
+ */
+
+/**
+ * @typedef {SimulatorOutputPoint[]} SimulatorOutputPath
  */
 
 /**
@@ -27,6 +35,20 @@ import { getPositionFromTime } from "./simulator";
  */
 
 /// --- TYPEDEFS end
+
+function getPositionFromTime(path, time) {
+  const currentPointIdx = path.findIndex(p => p.time > time);
+  if (currentPointIdx >= 0) {
+    const currentPoint = path[currentPointIdx];
+    const startTime = (path[currentPointIdx - 1] || {}).time || 0;
+    const deltaTime = time - startTime;
+    const displacement =
+      currentPoint.speed * deltaTime + 0.5 * currentPoint.acceleration * Math.pow(deltaTime, 2);
+    return currentPoint.start.add(currentPoint.direction.scale(displacement));
+  } else {
+    return path[path.length - 1].target;
+  }
+}
 
 export function AnimationHandler() {
   /**

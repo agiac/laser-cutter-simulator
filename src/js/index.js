@@ -1,15 +1,12 @@
 import * as R from "ramda";
-import * as Simulator from "./simulator";
-import { default as V } from "./vector.js";
 import { combineReducers, createStore } from "redux";
 import {
   idSelect,
   addOnChangeEventListener,
   addOnClickEventListener,
-  setInLocalStorage,
-  pathFromSvgFile,
-  pathFromSVGpath
+  setInLocalStorage
 } from "./utils";
+import * as sdk from "./sdk";
 import { AnimationHandler } from "./animation";
 
 // ACTIONS TYPES
@@ -37,12 +34,23 @@ const changeAnimation = animation => ({
 
 // REDUCERS
 
-const initialSettingsState = Simulator.defaultSettings();
+const numberFromLocalStorage = key => parseFloat(localStorage[key]);
+
+const initialSettingsState = {
+  maximumSpeedX: numberFromLocalStorage("maximumSpeedX") || 500,
+  maximumSpeedY: numberFromLocalStorage("maximumSpeedY") || 500,
+  accelerationX: numberFromLocalStorage("accelerationX") || 3000,
+  accelerationY: numberFromLocalStorage("accelerationY") || 3000,
+  minimumJunctionSpeed: numberFromLocalStorage("minimumJunctionSpeed") || 0,
+  junctionDeviation: numberFromLocalStorage("junctionDeviation") || 0.01,
+  cuttingSpeed: numberFromLocalStorage("cuttingSpeed") || 100,
+  travelSpeed: numberFromLocalStorage("travelSpeed") || 400
+};
+
 Object.entries(initialSettingsState).forEach(
-  ([setting, value]) => (idSelect(setting).value = value)
+  ([setting, value]) => (/** @type {HTMLInputElement}*/ (idSelect(setting)).value = value.toString())
 );
 const settingsList = R.keys(initialSettingsState);
-const laserStartingPosition = V.new(10, 10);
 
 const settingsReducer = (state = initialSettingsState, action) => {
   switch (action.type) {
@@ -71,6 +79,7 @@ const animationReducer = (state = null, action) => {
   }
 };
 
+// @ts-ignore
 const lastAction = (state = null, action) => {
   return action.type;
 };
@@ -88,7 +97,7 @@ const store = createStore(appReducer);
 
 const animationHandler = AnimationHandler();
 
-const canvas = idSelect("canvas");
+const canvas = /** @type {HTMLCanvasElement} */ (idSelect("canvas"));
 
 window.onresize = () => {
   canvas.width = canvas.clientWidth;
@@ -99,21 +108,25 @@ window.onresize = () => {
 animationHandler.setContext(canvas.getContext("2d"), canvas.width, canvas.height);
 
 const handleChange = () => {
+  // @ts-ignore
   const { settings, path, animation, lastAction } = store.getState();
 
   if ((lastAction === CHANGE_PATH || lastAction === CHANGE_SETTING) && path.path) {
-    const simulation = Simulator.simulate(path.path, settings, laserStartingPosition);
-    const timeEstimation = Simulator.timeEstimation(simulation);
+    // const simulation = Simulator.simulate(path.path, settings, laserStartingPosition);
+    // const timeEstimation = Simulator.timeEstimation(simulation);
 
-    idSelect("file-width").value = path.width.toFixed(0);
-    idSelect("file-height").value = path.height.toFixed(0);
+    const timeEstimation = 521;
+
+    /** @type {HTMLInputElement} */ (idSelect("project-width")).value = path.width.toFixed(0);
+    /** @type {HTMLInputElement} */ (idSelect("project-height")).value = path.height.toFixed(0);
 
     const formatSeconds = seconds =>
-      `${parseInt(seconds / 60)} min. ${parseInt(seconds % 60)} sec.`;
+      `${(seconds / 60).toFixed(0)} min. ${(seconds % 60).toFixed(0)} sec.`;
+
     idSelect("time-estimation").innerText = formatSeconds(timeEstimation);
 
-    animationHandler.setFrameData(simulation, laserStartingPosition, 0);
-    animationHandler.oneFrame(0);
+    // animationHandler.setFrameData(simulation, laserStartingPosition, 0);
+    // animationHandler.oneFrame(0);
   } else if (lastAction === CHANGE_ANIMATION) {
     if (animation === "play") {
       animationHandler.play();
@@ -142,23 +155,35 @@ settingsList.map(R.pipe(idSelect, addOnChangeEventListener(onSettingChanged)));
 
 const fileUploadInputId = "file-upload";
 
-const onFileUpload = e => {
-  const svgFile = e.target.files[0];
+const onFileUpload = async e => {
+  /**@type {File} */
+  const file = e.target.files[0];
 
-  if (!svgFile) return;
+  if (!file) return;
 
   idSelect("time-estimation").innerText = "--- min.";
   idSelect("loader").style.visibility = "visible";
 
-  setTimeout(async () => {
-    const [svgPath, path, width, height] = await pathFromSvgFile(
-      svgFile,
-      store.getState().settings
-    );
-    store.dispatch(changePath(svgPath, path, width, height, store.getState().path.locked));
-  }, 50);
+  try {
+    const text = await file.text();
+    const format = file.name.split(".").pop();
+
+    const parsed = await sdk.parseFile(text, format);
+    // const simulation = await sdk.analyzeProject(parsed)
+  } catch(error) {
+
+  }
+
+  // setTimeout(async () => {
+  //   const [svgPath, path, width, height] = await pathFromSvgFile(
+  //     svgFile,
+  //     store.getState().settings
+  //   );
+  //   store.dispatch(changePath(svgPath, path, width, height, store.getState().path.locked));
+  // }, 50);
 };
 
+// @ts-ignore
 R.pipe(idSelect, addOnChangeEventListener(onFileUpload))(fileUploadInputId);
 
 const onWidthOrHeightChange = e => {
@@ -168,24 +193,24 @@ const onWidthOrHeightChange = e => {
   } = store.getState();
 
   const newWidth =
-    e.target.id === "file-width"
+    e.target.id === "project-width"
       ? parseFloat(e.target.value)
       : locked
       ? (e.target.value / height) * width
       : width;
   const newHeight =
-    e.target.id === "file-height"
+    e.target.id === "project-height"
       ? parseFloat(e.target.value)
       : locked
       ? (e.target.value / width) * height
       : height;
 
-  const [newPath] = pathFromSVGpath(svgPath, settings, newWidth, newHeight);
+  // const [newPath] = pathFromSVGpath(svgPath, settings, newWidth, newHeight);
 
-  store.dispatch(changePath(svgPath, newPath, newWidth, newHeight, locked));
+  // store.dispatch(changePath(svgPath, newPath, newWidth, newHeight, locked));s
 };
 
-const fileWidthAndHeightSettings = ["file-width", "file-height"];
+const fileWidthAndHeightSettings = ["project-width", "project-height"];
 fileWidthAndHeightSettings.map(R.pipe(idSelect, addOnChangeEventListener(onWidthOrHeightChange)));
 
 const onLockClicked = () => {
@@ -208,12 +233,15 @@ lockProportionsSetting.map(R.pipe(idSelect, addOnClickEventListener(onLockClicke
 
 const onPlay = () => store.dispatch(changeAnimation("play"));
 
+// @ts-ignore
 R.pipe(idSelect, addOnClickEventListener(onPlay))("play");
 
 const onPause = () => store.dispatch(changeAnimation("pause"));
 
+// @ts-ignore
 R.pipe(idSelect, addOnClickEventListener(onPause))("pause");
 
 const onStop = () => store.dispatch(changeAnimation("stop"));
 
+// @ts-ignore
 R.pipe(idSelect, addOnClickEventListener(onStop))("stop");

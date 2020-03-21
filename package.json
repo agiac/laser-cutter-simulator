@@ -1,13 +1,15 @@
 {
   "scripts": {
     "start": "parcel src/index.html",
+    "dev": "now dev --listen 1234",
     "build": "parcel build src/index.html --out-dir public --no-source-maps",
     "deploy": "npm run build  && now ./public --prod"
   },
   "dependencies": {
+    "jwt-decode": "^2.2.0",
+    "node-fetch": "^2.6.0",
     "ramda": "^0.27.0",
-    "redux": "^4.0.5",
-    "simplify-js": "^1.2.4"
+    "redux": "^4.0.5"
   },
   "devDependencies": {
     "cssnano": "^4.1.10",
