@@ -39,7 +39,7 @@ const changeAnimation = animation => ({
 
 const initialSettingsState = Simulator.defaultSettings();
 Object.entries(initialSettingsState).forEach(
-  ([setting, value]) => /** @type {HTMLInputElement} */ (idSelect(setting).value = value.toString())
+  ([setting, value]) => (idSelect(setting).value = value)
 );
 const settingsList = R.keys(initialSettingsState);
 const laserStartingPosition = new Vec(10, 10);
@@ -88,7 +88,7 @@ const store = createStore(appReducer);
 
 const animationHandler = AnimationHandler();
 
-const canvas = /**@type {HTMLCanvasElement}*/ (idSelect("canvas"));
+const canvas = idSelect("canvas");
 
 window.onresize = () => {
   canvas.width = canvas.clientWidth;
@@ -105,11 +105,11 @@ const handleChange = () => {
     const simulation = Simulator.simulate(path.path, settings, laserStartingPosition);
     const timeEstimation = Simulator.timeEstimation(simulation);
 
-    /** @type {HTMLInputElement}*/ (idSelect("file-width")).value = path.width.toFixed(0);
-    /** @type {HTMLInputElement}*/ (idSelect("file-height")).value = path.height.toFixed(0);
+    idSelect("file-width").value = path.width.toFixed(0);
+    idSelect("file-height").value = path.height.toFixed(0);
 
     const formatSeconds = seconds =>
-      `${parseInt((seconds / 60).toString())} min. ${parseInt((seconds % 60).toString())} sec.`;
+      `${parseInt(seconds / 60)} min. ${parseInt(seconds % 60)} sec.`;
     idSelect("time-estimation").innerText = formatSeconds(timeEstimation);
 
     animationHandler.setFrameData(simulation, laserStartingPosition, 0);
@@ -159,7 +159,6 @@ const onFileUpload = e => {
   }, 50);
 };
 
-// @ts-ignore
 R.pipe(idSelect, addOnChangeEventListener(onFileUpload))(fileUploadInputId);
 
 const onWidthOrHeightChange = e => {
@@ -209,15 +208,12 @@ lockProportionsSetting.map(R.pipe(idSelect, addOnClickEventListener(onLockClicke
 
 const onPlay = () => store.dispatch(changeAnimation("play"));
 
-// @ts-ignore
 R.pipe(idSelect, addOnClickEventListener(onPlay))("play");
 
 const onPause = () => store.dispatch(changeAnimation("pause"));
 
-// @ts-ignore
 R.pipe(idSelect, addOnClickEventListener(onPause))("pause");
 
 const onStop = () => store.dispatch(changeAnimation("stop"));
 
-// @ts-ignore
 R.pipe(idSelect, addOnClickEventListener(onStop))("stop");
