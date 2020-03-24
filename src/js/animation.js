@@ -88,7 +88,7 @@ export function AnimationHandler() {
 
     ctx.resetTransform();
     ctx.clearRect(0, 0, context.width, context.height);
-      ctx.transform(zoom, 0, 0, zoom, panX, panY);
+    ctx.transform(zoom, 0, 0, zoom, panX, panY);
 
     ctx.lineWidth = 1 / zoom;
 

@@ -125,7 +125,7 @@ input {
 }
 
 canvas {
-  height: 400px;
+  height: 800px;
   background-color: #f6edd4;
   width: 100%;
   width: -moz-available;

@@ -7,12 +7,16 @@
  */
 function fetchExpect(input, status, init = null) {
   return new Promise(async (resolve, reject) => {
-    const response = await fetch(input, init);
-    const json = await response.json();
-    if (response.status === status) {
-      resolve(json);
-    } else {
-      reject(json);
+    try {
+      const response = await fetch(input, init);
+      const json = await response.json();
+      if (response.status === status) {
+        resolve(json);
+      } else {
+        reject(json);
+      }
+    } catch (error) {
+      reject({ error });
     }
   });
 }
