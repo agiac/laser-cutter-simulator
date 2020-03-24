@@ -28,20 +28,20 @@ export function parseFile(file, format) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({ file, format })
-  }).then(result => result.parsed);
+  }).then(result => result.project);
 }
 
 /**
  *
  * @param {string} project
- * @param {string} material
+ * @param {object} settings
  */
-export function analyzeProject(project, material) {
+export function analyzeProject(project, settings) {
   return fetchExpect("/api/analyse-project", 200, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ project: project, material: material })
+    body: JSON.stringify({ project, settings })
   });
 }

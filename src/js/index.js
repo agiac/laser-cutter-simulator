@@ -35,6 +35,7 @@ const changeAnimation = animation => ({
 // REDUCERS
 
 const numberFromLocalStorage = key => parseFloat(localStorage[key]);
+const valueFromLocalStorage = key => localStorage[key];
 
 const initialSettingsState = {
   maximumSpeedX: numberFromLocalStorage("maximumSpeedX") || 500,
@@ -44,11 +45,15 @@ const initialSettingsState = {
   minimumJunctionSpeed: numberFromLocalStorage("minimumJunctionSpeed") || 0,
   junctionDeviation: numberFromLocalStorage("junctionDeviation") || 0.01,
   cuttingSpeed: numberFromLocalStorage("cuttingSpeed") || 100,
-  travelSpeed: numberFromLocalStorage("travelSpeed") || 400
+  engravingSpeed: numberFromLocalStorage("cuttingSpeed") || 100,
+  travelSpeed: numberFromLocalStorage("travelSpeed") || 400,
+  cutColor: valueFromLocalStorage("cutColor") || "#ff0000",
+  engraveColor: valueFromLocalStorage("engraveColor") || "#008000"
 };
 
 Object.entries(initialSettingsState).forEach(
-  ([setting, value]) => /** @type {HTMLInputElement}*/ (idSelect(setting).value = value.toString())
+  // @ts-ignore
+  ([setting, value]) => (idSelect(setting).value = value.toString())
 );
 const settingsList = R.keys(initialSettingsState);
 
@@ -107,21 +112,25 @@ const store = createStore(appReducer);
 
 // animationHandler.setContext(canvas.getContext("2d"), canvas.width, canvas.height);
 
-const handleChange = () => {
+const handleChange = async () => {
   // @ts-ignore
   const { settings, animation, lastAction, path } = store.getState();
 
-  if (lastAction === CHANGE_PATH || lastAction === CHANGE_SETTING) {
+  if ((lastAction === CHANGE_PATH || lastAction === CHANGE_SETTING) && path.project) {
+    const { timeEstimation, simulation, boundingBox } = await sdk.analyzeProject(
+      path.project,
+      settings
+    );
 
     idSelect("canvas").innerHTML = path.project;
 
-    // /** @type {HTMLInputElement} */ (idSelect("project-width")).value = path.width.toFixed(0);
-    // /** @type {HTMLInputElement} */ (idSelect("project-height")).value = path.height.toFixed(0);
+    /** @type {HTMLInputElement} */ (idSelect("project-width")).value = boundingBox.width.toFixed(0);
+    /** @type {HTMLInputElement} */ (idSelect("project-height")).value = boundingBox.height.toFixed(0);
 
-    // const formatSeconds = seconds =>
-    //   `${(seconds / 60).toFixed(0)} min. ${(seconds % 60).toFixed(0)} sec.`;
+    const formatSeconds = seconds =>
+      `${(seconds / 60).toFixed(0)} min. ${(seconds % 60).toFixed(0)} sec.`;
 
-    // idSelect("time-estimation").innerText = formatSeconds(timeEstimation);
+    idSelect("time-estimation").innerText = formatSeconds(timeEstimation);
 
     // animationHandler.setFrameData(simulation, laserStartingPosition, 0);
     // animationHandler.oneFrame(0);
@@ -143,8 +152,9 @@ store.subscribe(handleChange);
 // SETTINGS CHANGED DISPATCHER
 
 const onSettingChanged = e => {
-  setInLocalStorage(e.target.id, e.target.value);
-  store.dispatch(changeSetting(e.target.id, e.target.value));
+  const value = e.target.type === "number" ? parseFloat(e.target.value) : e.target.value;
+  setInLocalStorage(e.target.id, value);
+  store.dispatch(changeSetting(e.target.id, value));
 };
 
 settingsList.map(R.pipe(idSelect, addOnChangeEventListener(onSettingChanged)));
@@ -169,12 +179,8 @@ const onFileUpload = async e => {
   try {
     const text = await file.text();
     const format = file.name.split(".").pop();
-    
-    console.log(format, text);
 
     const project = await sdk.parseFile(text, format);
-
-    console.log(project)
 
     store.dispatch(changePath(project, width, height, locked));
   } catch (error) {

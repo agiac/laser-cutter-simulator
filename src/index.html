@@ -57,14 +57,29 @@
         <span class="units">mm/s</span>
       </label>
       <label title="mm/s">
+        <p>Engraving speed:</p>
+        <input id="engravingSpeed" type="number" min="1" />
+        <span class="units">mm/s</span>
+      </label>
+      <label title="mm/s">
         <p>Travel speed:</p>
         <input id="travelSpeed" type="number" min="1" />
         <span class="units">mm/s</span>
       </label>
     </div>
     <div class="settings-section">
-      <h3>File:</h3>
+      <h3>Project:</h3>
       <input type="file" id="file-upload" id="file-upload" accept=".svg" />
+      <label title="Color of the cutting paths on the project">
+        <p>Cut paths color:</p>
+        <input id="cutColor" type="color" />
+        <span class="units"></span>
+      </label>
+      <label title="Color of the engraving paths on the project">
+        <p>Engrave paths color:</p>
+        <input id="engraveColor" type="color" />
+        <span class="units"></span>
+      </label>
       <label title="mm">
         <p>Width</p>
         <input id="project-width" type="number" min="1" />
@@ -85,11 +100,11 @@
     <h2>Estimated time:</h2>
     <h2 id="time-estimation">--- min.</h2>
   </section>
-  <section   class="animation-cotrollers">
+  <section class="animation-cotrollers">
     <i id="play" class="material-icons">play_arrow</i>
     <i id="pause" class="material-icons">pause</i>
     <i id="stop" class="material-icons">stop</i>
-  </section >
+  </section>
   <section>
     <!-- <canvas id="canvas"></canvas> -->
     <div id="canvas"></div>
