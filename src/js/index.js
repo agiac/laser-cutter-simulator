@@ -45,7 +45,7 @@ const initialSettingsState = {
   minimumJunctionSpeed: numberFromLocalStorage("minimumJunctionSpeed") || 0,
   junctionDeviation: numberFromLocalStorage("junctionDeviation") || 0.01,
   cuttingSpeed: numberFromLocalStorage("cuttingSpeed") || 100,
-  engravingSpeed: numberFromLocalStorage("cuttingSpeed") || 100,
+  engravingSpeed: numberFromLocalStorage("engravingSpeed") || 100,
   travelSpeed: numberFromLocalStorage("travelSpeed") || 400,
   cutColor: valueFromLocalStorage("cutColor") || "#ff0000",
   engraveColor: valueFromLocalStorage("engraveColor") || "#008000"
@@ -100,17 +100,17 @@ const appReducer = combineReducers({
 
 const store = createStore(appReducer);
 
-// const animationHandler = AnimationHandler();
+const animationHandler = AnimationHandler();
 
-// const canvas = /** @type {HTMLCanvasElement} */ (idSelect("canvas"));
+const canvas = /** @type {HTMLCanvasElement} */ (idSelect("canvas"));
 
-// window.onresize = () => {
-//   canvas.width = canvas.clientWidth;
-//   canvas.height = canvas.clientHeight;
-//   animationHandler.oneFrame(0);
-// };
+window.onresize = () => {
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+  animationHandler.oneFrame(0);
+};
 
-// animationHandler.setContext(canvas.getContext("2d"), canvas.width, canvas.height);
+animationHandler.setContext(canvas.getContext("2d"), canvas.width, canvas.height);
 
 const handleChange = async () => {
   // @ts-ignore
@@ -122,25 +122,29 @@ const handleChange = async () => {
       settings
     );
 
-    idSelect("canvas").innerHTML = path.project;
+    // idSelect("canvas").innerHTML = path.project;
 
-    /** @type {HTMLInputElement} */ (idSelect("project-width")).value = boundingBox.width.toFixed(0);
-    /** @type {HTMLInputElement} */ (idSelect("project-height")).value = boundingBox.height.toFixed(0);
+    /** @type {HTMLInputElement} */ (idSelect("project-width")).value = boundingBox.width.toFixed(
+      0
+    );
+    /** @type {HTMLInputElement} */ (idSelect("project-height")).value = boundingBox.height.toFixed(
+      0
+    );
 
     const formatSeconds = seconds =>
       `${(seconds / 60).toFixed(0)} min. ${(seconds % 60).toFixed(0)} sec.`;
 
     idSelect("time-estimation").innerText = formatSeconds(timeEstimation);
 
-    // animationHandler.setFrameData(simulation, laserStartingPosition, 0);
-    // animationHandler.oneFrame(0);
+    animationHandler.setFrameData(simulation, { x: boundingBox.minX, y: boundingBox.miny }, 0);
+    animationHandler.oneFrame(0);
   } else if (lastAction === CHANGE_ANIMATION) {
     if (animation === "play") {
-      // animationHandler.play();
+      animationHandler.play();
     } else if (animation === "pause") {
-      // animationHandler.pause();
+      animationHandler.pause();
     } else if (animation === "stop") {
-      // animationHandler.stop();
+      animationHandler.stop();
     }
   }
 
@@ -187,14 +191,6 @@ const onFileUpload = async e => {
     console.log(error);
     idSelect("loader").style.visibility = "hidden";
   }
-
-  // setTimeout(async () => {
-  //   const [svgPath, path, width, height] = await pathFromSvgFile(
-  //     svgFile,
-  //     store.getState().settings
-  //   );
-  //   store.dispatch(changePath(svgPath, path, width, height, store.getState().path.locked));
-  // }, 50);
 };
 
 // @ts-ignore
