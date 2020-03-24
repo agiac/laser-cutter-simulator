@@ -267,3 +267,26 @@ const onStop = () => store.dispatch(changeAnimation("stop"));
 
 // @ts-ignore
 R.pipe(idSelect, addOnClickEventListener(onStop))("stop");
+
+
+// ZOOM and PAN
+
+/**
+ * @param {WheelEvent} e
+ */
+const onScroll = e => {
+  e.preventDefault();
+  animationHandler.zoom(-e.deltaY * 0.001)
+};
+canvas.addEventListener("wheel", onScroll);
+
+/**
+ * @param {PointerEvent} e
+ */
+const onPointerMove = e => {
+  if (e.pressure > 0) {
+    e.preventDefault();
+    animationHandler.pan(e.movementX * 0.5, e.movementY * 0.5)
+  }
+};
+canvas.addEventListener("pointermove", onPointerMove);

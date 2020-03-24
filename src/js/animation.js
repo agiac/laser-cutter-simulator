@@ -73,20 +73,24 @@ export function AnimationHandler() {
   var isPlaying = false,
     willStop = false;
 
-  /**
-   * @param {RenderingContext} context
-   */
-  const clearFrame = context => {
-    context.context.clearRect(0, 0, context.width, context.height);
-  };
+  var zoom = 1,
+    panX = 0,
+    panY = 0;
 
   /**
    * @param {RenderingContext} context
    * @param {FrameData} frameData
    */
   const renderFrame = (context, frameData) => {
-    const ctx = context.context;
     const { path, laserPosition } = frameData;
+
+    const ctx = context.context;
+
+    ctx.resetTransform();
+    ctx.clearRect(0, 0, context.width, context.height);
+      ctx.transform(zoom, 0, 0, zoom, panX, panY);
+
+    ctx.lineWidth = 1 / zoom;
 
     if (path.length > 0) {
       let lastMovement = null;
@@ -144,8 +148,6 @@ export function AnimationHandler() {
   const renderLoop = timeNow => {
     mFrameData = nextFrameData(mFrameData, (timeNow - (timeLast || timeNow)) / 1000);
 
-    clearFrame(mContext);
-
     renderFrame(mContext, mFrameData);
 
     timeLast = timeNow;
@@ -182,6 +184,19 @@ export function AnimationHandler() {
      */
     setFrameData: (path, laserPosition, time) => {
       mFrameData = { path, laserPosition, time };
+    },
+    zoom: increment => {
+      if (mContext && mFrameData) {
+        zoom += increment;
+        renderFrame(mContext, mFrameData);
+      }
+    },
+    pan: (incrementX, incrementY) => {
+      if (mContext && mFrameData) {
+        panX += incrementX;
+        panY += incrementY;
+        renderFrame(mContext, mFrameData);
+      }
     },
     play: () => {
       if (mContext && mFrameData) {
