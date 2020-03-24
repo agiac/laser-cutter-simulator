@@ -22,9 +22,9 @@ const changeSetting = (setting, value) => ({
   change: { setting, value }
 });
 
-const changePath = (project, width, height, locked) => ({
+const changePath = (project, width, height, scaleX, scaleY, locked) => ({
   type: CHANGE_PATH,
-  path: { project, width, height, locked }
+  path: { project, width, height, scaleX, scaleY, locked }
 });
 
 const changeAnimation = animation => ({
@@ -66,7 +66,7 @@ const settingsReducer = (state = initialSettingsState, action) => {
   }
 };
 
-const pathReducer = (state = { locked: true }, action) => {
+const pathReducer = (state = { locked: true, scaleX: 1, scaleY: 1 }, action) => {
   switch (action.type) {
     case CHANGE_PATH:
       return action.path;
@@ -167,7 +167,8 @@ const fileUploadInputId = "file-upload";
 
 const onFileUpload = async e => {
   const {
-    path: { width, height, locked }
+    path: { locked, scaleX, scaleY },
+    settings
   } = store.getState();
 
   /**@type {File} */
@@ -183,8 +184,11 @@ const onFileUpload = async e => {
     const format = file.name.split(".").pop();
 
     const project = await sdk.parseFile(text, format);
+    const { boundingBox } = await sdk.analyzeProject(project, settings);
 
-    store.dispatch(changePath(project, width, height, locked));
+    store.dispatch(
+      changePath(project, boundingBox.width, boundingBox.height, scaleX, scaleY, locked)
+    );
   } catch (error) {
     console.log(error);
     idSelect("loader").style.visibility = "hidden";
@@ -196,8 +200,7 @@ R.pipe(idSelect, addOnChangeEventListener(onFileUpload))(fileUploadInputId);
 
 const onWidthOrHeightChange = e => {
   const {
-    path: { svgPath, width, height, locked },
-    settings
+    path: { project, width, height, scaleX, scaleY, locked }
   } = store.getState();
 
   const newWidth =
@@ -213,9 +216,20 @@ const onWidthOrHeightChange = e => {
       ? (e.target.value / width) * height
       : height;
 
-  // const [newPath] = pathFromSVGpath(svgPath, settings, newWidth, newHeight);
+  const newScaleX = newWidth / (width / scaleX);
+  const newScaleY = newHeight / (height / scaleY);
 
-  // store.dispatch(changePath(svgPath, newPath, newWidth, newHeight, locked));s
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(project, "image/svg+xml");
+
+  const projectGroup = doc.getElementById("project-group");
+
+  if (projectGroup) projectGroup.setAttribute("transform", `scale(${newScaleX}, ${newScaleY})`);
+
+  const serializer = new XMLSerializer();
+  const newProject = serializer.serializeToString(doc);
+
+  store.dispatch(changePath(newProject, newWidth, newHeight, newScaleX, newScaleY, locked));
 };
 
 const fileWidthAndHeightSettings = ["project-width", "project-height"];
@@ -223,7 +237,7 @@ fileWidthAndHeightSettings.map(R.pipe(idSelect, addOnChangeEventListener(onWidth
 
 const onLockClicked = () => {
   const {
-    path: { svgPath, path, width, height, locked }
+    path: { project, width, height, scaleX, scaleY, locked }
   } = store.getState();
 
   const newLocked = !locked;
@@ -231,7 +245,7 @@ const onLockClicked = () => {
   idSelect("lock-on").style.visibility = newLocked ? "visible" : "hidden";
   idSelect("lock-off").style.visibility = newLocked ? "hidden" : "visible";
 
-  // store.dispatch(changePath(svgPath, path, width, height, newLocked));
+  store.dispatch(changePath(project, width, height, scaleX, scaleY, newLocked));
 };
 
 const lockProportionsSetting = ["lock-on", "lock-off"];
