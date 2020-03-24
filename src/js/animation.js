@@ -8,6 +8,7 @@
  * @property {number} speed
  * @property {number} acceleration
  * @property {number} time
+ * @property {string} movement
  */
 
 /**
@@ -54,7 +55,7 @@ function getPositionFromTime(path, time) {
       currentPoint.speed * deltaTime + 0.5 * currentPoint.acceleration * Math.pow(deltaTime, 2);
     return vecAdd(currentPoint.start, vecScale(currentPoint.direction, displacement));
   } else {
-    return path[path.length - 1].target;
+    return path[path.length - 1] ? path[path.length - 1].target : { x: 0, y: 0 };
   }
 }
 
@@ -87,15 +88,39 @@ export function AnimationHandler() {
     const ctx = context.context;
     const { path, laserPosition } = frameData;
 
-    ctx.beginPath();
-    ctx.moveTo(path[0].start.x, path[0].start.y);
-    path.forEach(p => ctx.lineTo(p.target.x, p.target.y));
-    ctx.strokeStyle = "black";
-    ctx.stroke();
+    if (path.length > 0) {
+      let lastMovement = null;
+
+      for (let p of path) {
+        if (lastMovement !== p.movement) {
+          if (lastMovement) {
+            ctx.strokeStyle =
+              lastMovement === "cut" ? "red" : lastMovement === "engrave" ? "green" : "gray";
+            ctx.stroke();
+          }
+          ctx.beginPath();
+          ctx.moveTo(p.start.x, p.start.y);
+        }
+        ctx.lineTo(p.target.x, p.target.y);
+
+        lastMovement = p.movement;
+      }
+
+      if (lastMovement) {
+        ctx.strokeStyle =
+          lastMovement === "cut" ? "red" : lastMovement === "engrave" ? "green" : "gray";
+        ctx.stroke();
+      }
+    }
+
+    for (let p of path) {
+      ctx.lineTo(p.target.x, p.target.y);
+      ctx.strokeStyle = p.movement === "travel" ? "black" : p.movement === "cut" ? "red" : "green";
+    }
 
     ctx.beginPath();
     ctx.ellipse(laserPosition.x, laserPosition.y, 5, 5, 0, 0, 2 * Math.PI);
-    ctx.strokeStyle = "red";
+    ctx.strokeStyle = "blue";
     ctx.stroke();
   };
 
@@ -125,7 +150,7 @@ export function AnimationHandler() {
 
     timeLast = timeNow;
 
-    if (mFrameData.time >= mFrameData.path[mFrameData.path.length - 1].time) {
+    if (mFrameData.time >= mFrameData.path[mFrameData.path.length - 1]?.time) {
       mFrameData.time = 0;
       isPlaying = false;
     }
@@ -185,102 +210,3 @@ export function AnimationHandler() {
     }
   };
 }
-
-// export function AnimationHandler2() {
-//   /**
-//    * @type {SVGSVGElement}
-//    */
-//   let mContext;
-//   /**
-//    * @type {FrameData}
-//    */
-//   var mFrameData;
-
-//   var timeLast = null;
-//   var isPlaying = false,
-//     willStop = false;
-
-//   /**
-//    * @param {FrameData} pastFrameData
-//    * @param {number} ellapsedTIme
-//    */
-//   const nextFrameData = (pastFrameData, ellapsedTIme) => {
-//     const path = pastFrameData.path;
-//     const time = pastFrameData.time + ellapsedTIme;
-
-//     const laserPosition = getPositionFromTime(path, time);
-
-//     return {
-//       path,
-//       laserPosition,
-//       time
-//     };
-//   };
-
-//   const renderLoop = timeNow => {
-//     mFrameData = nextFrameData(mFrameData, (timeNow - (timeLast || timeNow)) / 1000);
-
-//     mFrameData.laserPosition
-
-//     renderFrame(mContext, mFrameData);
-
-//     timeLast = timeNow;
-
-//     if (mFrameData.time >= mFrameData.path[mFrameData.path.length - 1].time) {
-//       mFrameData.time = 0;
-//       isPlaying = false;
-//     }
-
-//     if (isPlaying) {
-//       if (willStop) {
-//         isPlaying = false;
-//         willStop = false;
-//       }
-//       window.requestAnimationFrame(renderLoop);
-//     } else {
-//       timeLast = null;
-//     }
-//   };
-
-//   return {
-//     /**
-//      * @param {SVGSVGElement} context
-//      */
-//     setCanvas: context => {
-//       mContext = context;
-//     },
-//     /**
-//      * @param {SimulatorOutputPath} path
-//      * @param {Vector} laserPosition
-//      * @param {number} time
-//      */
-//     setFrameData: (path, laserPosition, time) => {
-//       mFrameData = { path, laserPosition, time };
-//     },
-//     play: () => {
-//       if (mContext && mFrameData) {
-//         isPlaying = true;
-//         renderLoop(performance.now());
-//       }
-//     },
-//     pause: () => {
-//       isPlaying = false;
-//     },
-//     stop: () => {
-//       if (mContext && mFrameData) {
-//         mFrameData.time = 0;
-//         willStop = isPlaying;
-//         if (!isPlaying) {
-//           renderLoop(performance.now());
-//         }
-//       }
-//     },
-//     oneFrame: time => {
-//       if (mContext && mFrameData) {
-//         isPlaying = false;
-//         mFrameData.time = time;
-//         renderLoop(performance.now());
-//       }
-//     }
-//   };
-// }

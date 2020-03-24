@@ -122,8 +122,6 @@ const handleChange = async () => {
       settings
     );
 
-    // idSelect("canvas").innerHTML = path.project;
-
     /** @type {HTMLInputElement} */ (idSelect("project-width")).value = boundingBox.width.toFixed(
       0
     );
@@ -136,7 +134,7 @@ const handleChange = async () => {
 
     idSelect("time-estimation").innerText = formatSeconds(timeEstimation);
 
-    animationHandler.setFrameData(simulation, { x: boundingBox.minX, y: boundingBox.miny }, 0);
+    animationHandler.setFrameData(simulation, { x: boundingBox.minX, y: boundingBox.minY }, 0);
     animationHandler.oneFrame(0);
   } else if (lastAction === CHANGE_ANIMATION) {
     if (animation === "play") {
