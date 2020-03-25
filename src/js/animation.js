@@ -25,6 +25,7 @@
  * @typedef {Object} FrameData
  * @property {SimulatorOutputPath} path
  * @property {Vector} laserPosition
+ * @property {{min: Vector, width: number, height: number}} boundingBox
  * @property {number} time
  */
 
@@ -82,7 +83,7 @@ export function AnimationHandler() {
    * @param {FrameData} frameData
    */
   const renderFrame = (context, frameData) => {
-    const { path, laserPosition } = frameData;
+    const { path, laserPosition, boundingBox } = frameData;
 
     const ctx = context.context;
 
@@ -90,7 +91,13 @@ export function AnimationHandler() {
     ctx.clearRect(0, 0, context.width, context.height);
     ctx.transform(zoom, 0, 0, zoom, panX, panY);
 
+    ctx.rect(boundingBox.min.x, boundingBox.min.y, boundingBox.width, boundingBox.height);
+    ctx.setLineDash([10, 10]);
+    ctx.strokeStyle = "lightblue";
+    ctx.stroke();
+
     ctx.lineWidth = 1 / zoom;
+    ctx.setLineDash([]);
 
     if (path.length > 0) {
       let lastMovement = null;
@@ -134,6 +141,7 @@ export function AnimationHandler() {
    */
   const nextFrameData = (pastFrameData, ellapsedTIme) => {
     const path = pastFrameData.path;
+    const boundingBox = pastFrameData.boundingBox;
     const time = pastFrameData.time + ellapsedTIme;
 
     const laserPosition = getPositionFromTime(path, time);
@@ -141,6 +149,7 @@ export function AnimationHandler() {
     return {
       path,
       laserPosition,
+      boundingBox,
       time
     };
   };
@@ -180,10 +189,11 @@ export function AnimationHandler() {
     /**
      * @param {SimulatorOutputPath} path
      * @param {Vector} laserPosition
+     * @param {{min: Vector, width: number, height: number}} boundingBox
      * @param {number} time
      */
-    setFrameData: (path, laserPosition, time) => {
-      mFrameData = { path, laserPosition, time };
+    setFrameData: (path, laserPosition, boundingBox, time) => {
+      mFrameData = { path, laserPosition, boundingBox, time };
     },
     zoom: increment => {
       if (mContext && mFrameData) {

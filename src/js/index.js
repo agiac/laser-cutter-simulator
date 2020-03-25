@@ -134,7 +134,16 @@ const handleChange = async () => {
 
     idSelect("time-estimation").innerText = formatSeconds(timeEstimation);
 
-    animationHandler.setFrameData(simulation, { x: boundingBox.minX, y: boundingBox.minY }, 0);
+    animationHandler.setFrameData(
+      simulation,
+      { x: boundingBox.minX, y: boundingBox.minY },
+      {
+        min: { x: boundingBox.minX, y: boundingBox.minY },
+        width: boundingBox.width,
+        height: boundingBox.height
+      },
+      0
+    );
     animationHandler.oneFrame(0);
   } else if (lastAction === CHANGE_ANIMATION) {
     if (animation === "play") {
@@ -268,7 +277,6 @@ const onStop = () => store.dispatch(changeAnimation("stop"));
 // @ts-ignore
 R.pipe(idSelect, addOnClickEventListener(onStop))("stop");
 
-
 // ZOOM and PAN
 
 /**
@@ -276,7 +284,7 @@ R.pipe(idSelect, addOnClickEventListener(onStop))("stop");
  */
 const onScroll = e => {
   e.preventDefault();
-  animationHandler.zoom(-e.deltaY * 0.001)
+  animationHandler.zoom(-e.deltaY * 0.001);
 };
 canvas.addEventListener("wheel", onScroll);
 
@@ -286,7 +294,7 @@ canvas.addEventListener("wheel", onScroll);
 const onPointerMove = e => {
   if (e.pressure > 0) {
     e.preventDefault();
-    animationHandler.pan(e.movementX * 0.5, e.movementY * 0.5)
+    animationHandler.pan(e.movementX * 0.5, e.movementY * 0.5);
   }
 };
 canvas.addEventListener("pointermove", onPointerMove);

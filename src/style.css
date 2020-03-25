@@ -8,12 +8,11 @@ body {
   margin: 5%;
 }
 
-/* .title,
-.results,
-.time-estimation-section {
-  width: 100%;
+.title,
+.time-estimation-section,
+.instructions {
   max-width: var(--max-width);
-} */
+}
 
 .settings {
   flex: auto;
