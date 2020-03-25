@@ -31,8 +31,8 @@ export const authorize = handler => async (req, res) => {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        client_id: process.env.client_id,
-        client_secret: process.env.client_secret,
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.CLIENT_SECRET,
         audience: "https://api.distributed-manufacturing.com",
         grant_type: "client_credentials"
       })

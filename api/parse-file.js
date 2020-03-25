@@ -1,9 +1,10 @@
 const fetch = require("node-fetch").default;
 
 const { allowPostMethod, wrapAsync, authorize } = require("./_utils/middlewares");
+const API = require('./_utils/api');
 
 async function handler({ token_type, access_token }, req, res) {
-  const response = await fetch(`${process.env.DM_host}/laser/parse-file`, {
+  const response = await fetch(`${API}laser/parse-file`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
