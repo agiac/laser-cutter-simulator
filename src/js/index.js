@@ -112,39 +112,64 @@ window.onresize = () => {
 
 animationHandler.setContext(canvas.getContext("2d"), canvas.width, canvas.height);
 
+const toggleError = message => {
+  const errorP = document.querySelector(".error");
+
+  if (message) {
+    errorP.innerHTML = message;
+    errorP["style"].display = "block";
+  } else {
+    errorP["style"].display = "none";
+  }
+};
+
 const handleChange = async () => {
   // @ts-ignore
   const { settings, animation, lastAction, path } = store.getState();
 
+  toggleError(false);
+
   if ((lastAction === CHANGE_PATH || lastAction === CHANGE_SETTING) && path.project) {
-    const { timeEstimation, simulation, boundingBox } = await sdk.analyzeProject(
-      path.project,
-      settings
-    );
+    try {
+      const { timeEstimation, simulation, boundingBox } = await sdk.analyzeProject(
+        path.project,
+        settings
+      );
 
-    /** @type {HTMLInputElement} */ (idSelect("project-width")).value = boundingBox.width.toFixed(
-      0
-    );
-    /** @type {HTMLInputElement} */ (idSelect("project-height")).value = boundingBox.height.toFixed(
-      0
-    );
+      if (simulation.length === 0) {
+        toggleError(
+          "We didn't find any cutting or engraving paths. Are you sure you specified the right colors?"
+        );
+      } else {
+        toggleError(false);
+      }
 
-    const formatSeconds = seconds =>
-      `${(seconds / 60).toFixed(0)} min. ${(seconds % 60).toFixed(0)} sec.`;
+      /** @type {HTMLInputElement} */ (idSelect("project-width")).value = boundingBox.width.toFixed(
+        0
+      );
+      /** @type {HTMLInputElement} */ (idSelect(
+        "project-height"
+      )).value = boundingBox.height.toFixed(0);
 
-    idSelect("time-estimation").innerText = formatSeconds(timeEstimation);
+      const formatSeconds = seconds =>
+        `${(seconds / 60).toFixed(0)} min. ${(seconds % 60).toFixed(0)} sec.`;
 
-    animationHandler.setFrameData(
-      simulation,
-      { x: boundingBox.minX, y: boundingBox.minY },
-      {
-        min: { x: boundingBox.minX, y: boundingBox.minY },
-        width: boundingBox.width,
-        height: boundingBox.height
-      },
-      0
-    );
-    animationHandler.oneFrame(0);
+      idSelect("time-estimation").innerText = formatSeconds(timeEstimation);
+
+      animationHandler.setFrameData(
+        simulation,
+        { x: boundingBox.minX, y: boundingBox.minY },
+        {
+          min: { x: boundingBox.minX, y: boundingBox.minY },
+          width: boundingBox.width,
+          height: boundingBox.height
+        },
+        0
+      );
+      animationHandler.oneFrame(0);
+    } catch (error) {
+      toggleError(error);
+    }
   } else if (lastAction === CHANGE_ANIMATION) {
     if (animation === "play") {
       animationHandler.play();
@@ -200,6 +225,7 @@ const onFileUpload = async e => {
     );
   } catch (error) {
     console.log(error);
+    toggleError(error);
     idSelect("loader").style.visibility = "hidden";
   }
 };

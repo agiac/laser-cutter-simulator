@@ -14,6 +14,11 @@ body {
   max-width: var(--max-width);
 }
 
+.error {
+  color: red;
+  display: none;
+}
+
 .settings {
   flex: auto;
   max-width: var(--max-width);
