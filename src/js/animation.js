@@ -197,7 +197,7 @@ export function AnimationHandler() {
     },
     zoom: increment => {
       if (mContext && mFrameData) {
-        zoom += increment;
+        zoom = Math.max(0.1, zoom + increment);
         renderFrame(mContext, mFrameData);
       }
     },
