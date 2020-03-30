@@ -9,30 +9,7 @@ import {
 import * as sdk from "./sdk";
 import { AnimationHandler } from "./animation";
 
-// ACTIONS TYPES
-
-const CHANGE_SETTING = "CHANGE_SETTING";
-const CHANGE_PATH = "CHANGE_PATH";
-const CHANGE_ANIMATION = "CHANGE_ANIMATION";
-
-// ACTIONS CREATORS
-
-const changeSetting = (setting, value) => ({
-  type: CHANGE_SETTING,
-  change: { setting, value }
-});
-
-const changePath = (project, width, height, scaleX, scaleY, locked) => ({
-  type: CHANGE_PATH,
-  path: { project, width, height, scaleX, scaleY, locked }
-});
-
-const changeAnimation = animation => ({
-  type: CHANGE_ANIMATION,
-  animation
-});
-
-// REDUCERS
+// SETTINGS
 
 const numberFromLocalStorage = key => parseFloat(localStorage[key]);
 const valueFromLocalStorage = key => localStorage[key];
@@ -57,14 +34,53 @@ Object.entries(initialSettingsState).forEach(
 );
 const settingsList = R.keys(initialSettingsState);
 
-const settingsReducer = (state = initialSettingsState, action) => {
-  switch (action.type) {
-    case CHANGE_SETTING:
-      return R.assoc(action.change.setting, action.change.value, state);
-    default:
-      return state;
+const getSettings = () =>
+  settingsList.reduce((settings, setting) => {
+    const element = /** @type {HTMLInputElement}*/ (idSelect(setting));
+    const value = element.type === "number" ? parseFloat(element.value) : element.value;
+    return { ...settings, [setting]: value };
+  }, {});
+
+const onSettingChanged = async e => {
+  const {
+    path: { locked, scaleX, scaleY, project }
+  } = store.getState();
+
+  const value = Math.max(parseFloat(e.target.value), e.target.min);
+  e.target.value = value;
+  const settings = { ...getSettings(), [e.target.id]: value };
+
+  setInLocalStorage(e.target.id, settings[e.target.id]);
+
+  if (project) {
+    const analysis = await sdk.analyzeProject(project, settings, true);
+    store.dispatch(changePath(project, scaleX, scaleY, locked, analysis));
   }
 };
+
+settingsList.map(R.pipe(idSelect, addOnChangeEventListener(onSettingChanged)));
+
+
+// REDUX
+
+// ACTIONS TYPES
+
+const CHANGE_PATH = "CHANGE_PATH";
+const CHANGE_ANIMATION = "CHANGE_ANIMATION";
+
+// ACTIONS CREATORS
+
+const changePath = (project, scaleX, scaleY, locked, analysis) => ({
+  type: CHANGE_PATH,
+  path: { project, scaleX, scaleY, locked, analysis }
+});
+
+const changeAnimation = animation => ({
+  type: CHANGE_ANIMATION,
+  animation
+});
+
+// REDUCERS
 
 const pathReducer = (state = { locked: true, scaleX: 1, scaleY: 1 }, action) => {
   switch (action.type) {
@@ -90,7 +106,6 @@ const lastAction = (state = null, action) => {
 };
 
 const appReducer = combineReducers({
-  settings: settingsReducer,
   path: pathReducer,
   animation: animationReducer,
   lastAction
@@ -125,17 +140,13 @@ const toggleError = message => {
 
 const handleChange = async () => {
   // @ts-ignore
-  const { settings, animation, lastAction, path } = store.getState();
+  const { animation, lastAction, path } = store.getState();
 
   toggleError(false);
 
-  if ((lastAction === CHANGE_PATH || lastAction === CHANGE_SETTING) && path.project) {
+  if (lastAction === CHANGE_PATH && path.project) {
     try {
-      const { timeEstimation, simulation, boundingBox } = await sdk.analyzeProject(
-        path.project,
-        settings,
-        true
-      );
+      const { timeEstimation, simulation, boundingBox } = path.analysis;
 
       if (simulation?.length === 0) {
         toggleError(
@@ -187,24 +198,13 @@ const handleChange = async () => {
 
 store.subscribe(handleChange);
 
-// SETTINGS CHANGED DISPATCHER
-
-const onSettingChanged = e => {
-  const value = e.target.type === "number" ? parseFloat(e.target.value) : e.target.value;
-  setInLocalStorage(e.target.id, value);
-  store.dispatch(changeSetting(e.target.id, value));
-};
-
-settingsList.map(R.pipe(idSelect, addOnChangeEventListener(onSettingChanged)));
-
-// FILE UPLOAD DISPATCHER
+// PATH DISPATCHER
 
 const fileUploadInputId = "file-upload";
 
 const onFileUpload = async e => {
   const {
-    path: { locked, scaleX, scaleY },
-    settings
+    path: { locked, scaleX, scaleY }
   } = store.getState();
 
   /**@type {File} */
@@ -218,13 +218,12 @@ const onFileUpload = async e => {
   try {
     const text = await file.text();
     const format = file.name.split(".").pop();
+    const settings = getSettings();
 
     const project = await sdk.parseFile(text, format);
-    const { boundingBox } = await sdk.analyzeProject(project, settings, true);
+    const analysis = await sdk.analyzeProject(project, settings, true);
 
-    store.dispatch(
-      changePath(project, boundingBox.width, boundingBox.height, scaleX, scaleY, locked)
-    );
+    store.dispatch(changePath(project, scaleX, scaleY, locked, analysis));
   } catch (error) {
     console.log(error);
     toggleError(error);
@@ -235,26 +234,29 @@ const onFileUpload = async e => {
 // @ts-ignore
 R.pipe(idSelect, addOnChangeEventListener(onFileUpload))(fileUploadInputId);
 
-const onWidthOrHeightChange = e => {
+const onWidthOrHeightChange = async e => {
   const {
-    path: { project, width, height, scaleX, scaleY, locked }
+    path: { project, scaleX, scaleY, locked, analysis }
   } = store.getState();
+
+  const value = Math.max(parseFloat(e.target.value), 1);
+  e.target.value = value;
 
   const newWidth =
     e.target.id === "project-width"
-      ? parseFloat(e.target.value)
+      ? value
       : locked
-      ? (e.target.value / height) * width
-      : width;
+      ? (value / analysis?.boundingBox?.height) * analysis?.boundingBox?.width
+      : analysis?.boundingBox?.width;
   const newHeight =
     e.target.id === "project-height"
-      ? parseFloat(e.target.value)
+      ? value
       : locked
-      ? (e.target.value / width) * height
-      : height;
+      ? (value / analysis?.boundingBox?.width) * analysis?.boundingBox?.height
+      : analysis?.boundingBox?.height;
 
-  const newScaleX = newWidth / (width / scaleX);
-  const newScaleY = newHeight / (height / scaleY);
+  const newScaleX = newWidth / (analysis?.boundingBox?.width / scaleX);
+  const newScaleY = newHeight / (analysis?.boundingBox?.height / scaleY);
 
   const parser = new DOMParser();
   const doc = parser.parseFromString(project, "image/svg+xml");
@@ -266,7 +268,11 @@ const onWidthOrHeightChange = e => {
   const serializer = new XMLSerializer();
   const newProject = serializer.serializeToString(doc);
 
-  store.dispatch(changePath(newProject, newWidth, newHeight, newScaleX, newScaleY, locked));
+  const settings = getSettings();
+
+  const newAnalysis = await sdk.analyzeProject(newProject, settings, true);
+
+  store.dispatch(changePath(newProject, newScaleX, newScaleY, locked, newAnalysis));
 };
 
 const fileWidthAndHeightSettings = ["project-width", "project-height"];
@@ -274,7 +280,7 @@ fileWidthAndHeightSettings.map(R.pipe(idSelect, addOnChangeEventListener(onWidth
 
 const onLockClicked = () => {
   const {
-    path: { project, width, height, scaleX, scaleY, locked }
+    path: { project, scaleX, scaleY, locked, analysis }
   } = store.getState();
 
   const newLocked = !locked;
@@ -282,7 +288,7 @@ const onLockClicked = () => {
   idSelect("lock-on").style.visibility = newLocked ? "visible" : "hidden";
   idSelect("lock-off").style.visibility = newLocked ? "hidden" : "visible";
 
-  store.dispatch(changePath(project, width, height, scaleX, scaleY, newLocked));
+  store.dispatch(changePath(project, scaleX, scaleY, newLocked, analysis));
 };
 
 const lockProportionsSetting = ["lock-on", "lock-off"];
