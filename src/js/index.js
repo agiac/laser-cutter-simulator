@@ -53,13 +53,15 @@ const onSettingChanged = async e => {
   setInLocalStorage(e.target.id, settings[e.target.id]);
 
   if (project) {
+    idSelect("time-estimation").innerText = "--- min.";
+    idSelect("loader").style.visibility = "visible";
+
     const analysis = await sdk.analyzeProject(project, settings, true);
     store.dispatch(changePath(project, scaleX, scaleY, locked, analysis));
   }
 };
 
 settingsList.map(R.pipe(idSelect, addOnChangeEventListener(onSettingChanged)));
-
 
 // REDUX
 
@@ -269,6 +271,9 @@ const onWidthOrHeightChange = async e => {
   const newProject = serializer.serializeToString(doc);
 
   const settings = getSettings();
+
+  idSelect("time-estimation").innerText = "--- min.";
+  idSelect("loader").style.visibility = "visible";
 
   const newAnalysis = await sdk.analyzeProject(newProject, settings, true);
 
