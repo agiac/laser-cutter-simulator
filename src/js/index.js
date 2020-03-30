@@ -133,10 +133,11 @@ const handleChange = async () => {
     try {
       const { timeEstimation, simulation, boundingBox } = await sdk.analyzeProject(
         path.project,
-        settings
+        settings,
+        true
       );
 
-      if (simulation.length === 0) {
+      if (simulation?.length === 0) {
         toggleError(
           "We didn't find any cutting or engraving paths. Are you sure you specified the right colors?"
         );
@@ -168,6 +169,7 @@ const handleChange = async () => {
       );
       animationHandler.oneFrame(0);
     } catch (error) {
+      console.log(error);
       toggleError(error);
     }
   } else if (lastAction === CHANGE_ANIMATION) {
@@ -218,7 +220,7 @@ const onFileUpload = async e => {
     const format = file.name.split(".").pop();
 
     const project = await sdk.parseFile(text, format);
-    const { boundingBox } = await sdk.analyzeProject(project, settings);
+    const { boundingBox } = await sdk.analyzeProject(project, settings, true);
 
     store.dispatch(
       changePath(project, boundingBox.width, boundingBox.height, scaleX, scaleY, locked)

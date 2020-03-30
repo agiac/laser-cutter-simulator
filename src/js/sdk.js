@@ -40,13 +40,14 @@ export function parseFile(file, format) {
  *
  * @param {string} project
  * @param {object} settings
+ * @param {boolean} simulation
  */
-export function analyzeProject(project, settings) {
+export function analyzeProject(project, settings, simulation=false) {
   return fetchExpect("/api/analyse-project", 200, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ project, settings })
+    body: JSON.stringify({ project, settings, simulation})
   });
 }

@@ -24,7 +24,7 @@ export const wrapAsync = handler => (req, res) => {
 };
 
 export const authorize = handler => async (req, res) => {
-  if (authorization && jwtDecode(authorization.access_token).exp < Date.now()) {
+  if (authorization && !authorization.error && jwtDecode(authorization.access_token).exp < Date.now()) {
     handler(authorization, req, res);
   } else {
     const response = await fetch("https://distributed-manufacturing.eu.auth0.com/oauth/token", {
