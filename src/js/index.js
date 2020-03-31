@@ -337,7 +337,7 @@ R.pipe(idSelect, addOnClickEventListener(onStop))("stop");
  */
 const onScroll = e => {
   e.preventDefault();
-  animationHandler.zoom(-e.deltaY * 0.001);
+  animationHandler.zoom(-e.deltaY * 0.0005);
 };
 canvas.addEventListener("wheel", onScroll);
 

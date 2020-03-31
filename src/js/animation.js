@@ -202,12 +202,16 @@ export function AnimationHandler() {
      */
     setFrameData: (path, laserPosition, boundingBox, time) => {
       mFrameData = { path, laserPosition, boundingBox, time };
-      panX = mContext.width / 2 - boundingBox.min.x - boundingBox.width / 2;
-      panY = mContext.height / 2 - boundingBox.min.y - boundingBox.height / 2;
+      zoom = Math.min(
+        (mContext.width - 100) / boundingBox.width,
+        (mContext.height - 100) / boundingBox.height
+      );
+      panX = mContext.width / 2 - (boundingBox.min.x + boundingBox.width / 2) * zoom;
+      panY = mContext.height / 2 - (boundingBox.min.y + boundingBox.height / 2) * zoom;
     },
     zoom: increment => {
       if (mContext && mFrameData) {
-        zoom = Math.max(0.1, zoom + increment);
+        zoom = Math.max(0.1, zoom + increment * zoom);
         renderFrame(mContext, mFrameData);
       }
     },
