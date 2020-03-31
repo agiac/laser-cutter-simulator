@@ -73,7 +73,11 @@
     </div>
     <div class="settings-section">
       <h3>Project:</h3>
-      <input type="file" id="file-upload" id="file-upload" accept=".svg, .dxf" />
+      <div class="upload">
+        <input type="file" id="file-upload" id="file-upload" accept=".svg, .dxf" />
+        <label id="file-upload-label" for="file-upload">Choose file</label>
+        <span id="file-upload-name">No file chosen</span>
+      </div>
       <label title="Color of the cutting paths on the project">
         <p>Cut paths color:</p>
         <input id="cutColor" type="color" />
@@ -102,8 +106,24 @@
   </section>
   <p class="error"></p>
   <section class="time-estimation-section">
-    <h2>Estimated time:</h2>
-    <h2 id="time-estimation">--- min.</h2>
+    <div class="analysis">
+    <div>
+      <h2>Estimated time:</h2>
+      <h2 id="time-estimation">--- min.</h2>
+    </div>
+    <div>
+      <h4>Cut distance:</h4>
+      <h4 id="cut-distance">--- mm</h4>
+    </div>
+    <div>
+      <h4>Engrave distance:</h4>
+      <h4 id="engrave-distance">--- mm</h4>
+    </div>
+    <div>
+      <h4>Travel distance:</h4>
+      <h4 id="travel-distance">--- mm</h4>
+    </div>
+  </div>
   </section>
   <section class="animation-cotrollers">
     <i id="play" class="material-icons">play_arrow</i>

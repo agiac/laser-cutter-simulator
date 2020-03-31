@@ -87,18 +87,49 @@ input {
   font-size: smaller;
 }
 
-#file-upload {
-  width: var(--column-width);
-  margin-bottom: 12px;
+.upload {
+  display: flex;
+  align-items: baseline;
 }
 
-.time-estimation-section {
-  /* display: flex; */
+#file-upload {
+  display: none;
+}
+
+#file-upload-label {
+  width: 75px;
+  height: 30px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+#file-upload-name {
+  margin-left: 5px;
+  font-size: 12px;
+}
+
+.analysis {
+  display: flex;
+  flex-flow: column;
   color: cornflowerblue;
 }
 
-.time-estimation-section h2 {
+.analysis div {
+  display: flex;
+}
+
+.analysis h2 {
   margin-right: 16px;
+}
+
+.analysis h4 {
+  margin-right: 16px;
+  margin-top: 3px;
+  margin-bottom: 3px;
 }
 
 .animation-cotrollers {

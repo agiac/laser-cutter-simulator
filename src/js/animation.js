@@ -87,17 +87,21 @@ export function AnimationHandler() {
 
     const ctx = context.context;
 
+    ctx.lineWidth = 1 / zoom;
+
     ctx.resetTransform();
     ctx.clearRect(0, 0, context.width, context.height);
     ctx.transform(zoom, 0, 0, zoom, panX, panY);
 
-    ctx.rect(boundingBox.min.x, boundingBox.min.y, boundingBox.width, boundingBox.height);
-    ctx.setLineDash([10, 10]);
-    ctx.strokeStyle = "lightblue";
-    ctx.stroke();
-
-    ctx.lineWidth = 1 / zoom;
     ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.moveTo(laserPosition.x, laserPosition.y - 5 / zoom);
+    ctx.lineTo(laserPosition.x, laserPosition.y + 5 / zoom);
+    ctx.moveTo(laserPosition.x - 5 / zoom, laserPosition.y);
+    ctx.lineTo(laserPosition.x + 5 / zoom, laserPosition.y);
+    ctx.strokeStyle = "red";
+    ctx.stroke();
 
     if (path.length > 0) {
       let lastMovement = null;
@@ -106,7 +110,7 @@ export function AnimationHandler() {
         if (lastMovement !== p.movement) {
           if (lastMovement) {
             ctx.strokeStyle =
-              lastMovement === "cut" ? "red" : lastMovement === "engrave" ? "green" : "gray";
+              lastMovement === "cut" ? "black" : lastMovement === "engrave" ? "gray" : "lightcoral";
             ctx.stroke();
           }
           ctx.beginPath();
@@ -119,19 +123,23 @@ export function AnimationHandler() {
 
       if (lastMovement) {
         ctx.strokeStyle =
-          lastMovement === "cut" ? "red" : lastMovement === "engrave" ? "green" : "gray";
+          lastMovement === "cut" ? "black" : lastMovement === "engrave" ? "gray" : "lightcoral";
         ctx.stroke();
       }
     }
 
-    for (let p of path) {
-      ctx.lineTo(p.target.x, p.target.y);
-      ctx.strokeStyle = p.movement === "travel" ? "black" : p.movement === "cut" ? "red" : "green";
-    }
+    ctx.rect(boundingBox.min.x, boundingBox.min.y, boundingBox.width, boundingBox.height);
+    ctx.setLineDash([2 / zoom, 5 / zoom]);
+    ctx.strokeStyle = "green";
+    ctx.stroke();
 
     ctx.beginPath();
-    ctx.ellipse(laserPosition.x, laserPosition.y, 5, 5, 0, 0, 2 * Math.PI);
-    ctx.strokeStyle = "blue";
+    ctx.moveTo(0, -10000);
+    ctx.lineTo(0, 10000);
+    ctx.moveTo(-10000, 0);
+    ctx.lineTo(10000, 0);
+    ctx.strokeStyle = "lightblue";
+    ctx.setLineDash([]);
     ctx.stroke();
   };
 
@@ -194,6 +202,8 @@ export function AnimationHandler() {
      */
     setFrameData: (path, laserPosition, boundingBox, time) => {
       mFrameData = { path, laserPosition, boundingBox, time };
+      panX = mContext.width / 2 - boundingBox.min.x - boundingBox.width / 2;
+      panY = mContext.height / 2 - boundingBox.min.y - boundingBox.height / 2;
     },
     zoom: increment => {
       if (mContext && mFrameData) {

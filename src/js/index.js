@@ -46,7 +46,10 @@ const onSettingChanged = async e => {
     path: { locked, scaleX, scaleY, project }
   } = store.getState();
 
-  const value = Math.max(parseFloat(e.target.value), e.target.min);
+  const value =
+    e.target.type === "number"
+      ? Math.max(parseFloat(e.target.value), e.target.min)
+      : e.target.value;
   e.target.value = value;
   const settings = { ...getSettings(), [e.target.id]: value };
 
@@ -148,14 +151,19 @@ const handleChange = async () => {
 
   if (lastAction === CHANGE_PATH && path.project) {
     try {
-      const { timeEstimation, simulation, boundingBox } = path.analysis;
+      const {
+        timeEstimation,
+        simulation,
+        boundingBox,
+        cutLength,
+        engraveLength,
+        travelLength
+      } = path.analysis;
 
       if (simulation?.length === 0) {
         toggleError(
           "We didn't find any cutting or engraving paths. Are you sure you specified the right colors?"
         );
-      } else {
-        toggleError(false);
       }
 
       /** @type {HTMLInputElement} */ (idSelect("project-width")).value = boundingBox.width.toFixed(
@@ -169,6 +177,9 @@ const handleChange = async () => {
         `${(seconds / 60).toFixed(0)} min. ${(seconds % 60).toFixed(0)} sec.`;
 
       idSelect("time-estimation").innerText = formatSeconds(timeEstimation);
+      idSelect("cut-distance").innerText = `${cutLength.toFixed(0)} mm`;
+      idSelect("engrave-distance").innerText = `${engraveLength.toFixed(0)} mm`;
+      idSelect("travel-distance").innerText = `${travelLength.toFixed(0)} mm`;
 
       animationHandler.setFrameData(
         simulation,
@@ -231,6 +242,9 @@ const onFileUpload = async e => {
     toggleError(error);
     idSelect("loader").style.visibility = "hidden";
   }
+
+  e.target.value = "";
+  /**@type {HTMLSpanElement}*/ (idSelect("file-upload-name")).textContent = file.name;
 };
 
 // @ts-ignore
