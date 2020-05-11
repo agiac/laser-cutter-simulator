@@ -173,10 +173,7 @@ const handleChange = async () => {
         "project-height"
       )).value = boundingBox.height.toFixed(0);
 
-      const formatSeconds = seconds =>
-        `${(seconds / 60).toFixed(0)} min. ${(seconds % 60).toFixed(0)} sec.`;
-
-      idSelect("time-estimation").innerText = formatSeconds(timeEstimation);
+      idSelect("time-estimation").innerText = `${(timeEstimation / 60).toFixed(0)} min. ${(timeEstimation % 60).toFixed(0)} sec.`;
       idSelect("cut-distance").innerText = `${cutLength.toFixed(0)} mm`;
       idSelect("engrave-distance").innerText = `${engraveLength.toFixed(0)} mm`;
       idSelect("travel-distance").innerText = `${travelLength.toFixed(0)} mm`;
